@@ -1,7 +1,6 @@
 module Control.Proxy.Binary
   ( -- * Decoding
     decodeD
-  , maybeDecodeD
   , eitherDecodeD
    -- * Exports
   , module Control.Proxy.Binary.Types
@@ -23,7 +22,7 @@ import           Prelude                       hiding (mapM_)
 --------------------------------------------------------------------------------
 
 -- | Decodes binary input flowing downstream until parsing either succeeds or
--- fails.
+-- fails. Returns 'Nothing' on EOF.
 --
 -- In case of parsing errors, a 'ParsingError' exception is thrown in the
 -- 'Pe.EitherP' proxy transformer.
@@ -33,39 +32,34 @@ decodeD
   :: (P.Proxy p, Monad m, Bin.Binary r)
   => ()
   -> Pe.EitherP ParsingError (Ps.StateP [BS.ByteString] p)
-     () (Maybe BS.ByteString) b' b m r
+     () (Maybe BS.ByteString) b' b m (Maybe r)
 decodeD = \() -> do
-    (er, mlo) <- P.liftP $ I.parseWithMay Pa.draw Bin.get
-    P.liftP $ mapM_ Pa.unDraw mlo
-    case er of
-      Left e  -> Pe.throw e
-      Right r -> return r
+    eof <- P.liftP $ Pa.isEndOfInput
+    if eof
+      then return Nothing
+      else do
+        (er, mlo) <- P.liftP $ I.parseWithMay Pa.draw Bin.get
+        P.liftP $ mapM_ Pa.unDraw mlo
+        case er of
+          Left e  -> Pe.throw e
+          Right r -> return (Just r)
 
--- | Try to decode input flowing downstream, return 'Nothing' in case of
--- parsing failures.
---
--- Requests more input from upstream using 'Pa.draw', when needed.
-maybeDecodeD
-  :: (Monad m, P.Proxy p, Bin.Binary r)
-  => () -> Ps.StateP [BS.ByteString] p () (Maybe BS.ByteString) b' b m (Maybe r)
-maybeDecodeD = \() -> do
-    (er,mlo) <- I.parseWithMay Pa.draw Bin.get
-    mapM_ Pa.unDraw mlo
-    case er of
-      Left _  -> return Nothing
-      Right r -> return (Just r)
 
--- | Try to decode input flowing downstream, return 'Left' in case of parsing
--- failures.
+-- | Try to decode input flowing downstream. Returns 'Just Left' in case of
+-- parsing failures and 'Nothing' on EOF.
 --
 -- Requests more input from upstream using 'Pa.draw', when needed.
 eitherDecodeD
   :: (Monad m, P.Proxy p, Bin.Binary r)
   => ()
   -> Ps.StateP [BS.ByteString] p
-     () (Maybe BS.ByteString) b' b m (Either ParsingError r)
+     () (Maybe BS.ByteString) b' b m (Maybe (Either ParsingError r))
 eitherDecodeD = \() -> do
-    (er,mlo) <- I.parseWithMay Pa.draw Bin.get
-    mapM_ Pa.unDraw mlo
-    return er
+    eof <- Pa.isEndOfInput
+    if eof
+      then return Nothing
+      else do
+        (er,mlo) <- I.parseWithMay Pa.draw Bin.get
+        mapM_ Pa.unDraw mlo
+        return (Just er)
 
