@@ -22,7 +22,7 @@ import           Prelude                       hiding (mapM_)
 
 --------------------------------------------------------------------------------
 
--- | Decodes binary input flowing downstream until decoding either succeeds or
+-- | Decodes binary input flowing downstream until parsing either succeeds or
 -- fails.
 --
 -- In case of parsing errors, a 'ParsingError' exception is thrown in the
