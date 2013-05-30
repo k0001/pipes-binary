@@ -1,8 +1,10 @@
 module Control.Proxy.Binary
-  ( ParsingError(..)
-  , decodeD
+  ( -- * Decoding
+    decodeD
   , maybeDecodeD
   , eitherDecodeD
+   -- * Exports
+  , module Control.Proxy.Binary.Types
   ) where
 
 -------------------------------------------------------------------------------
