@@ -22,7 +22,7 @@ import           Prelude                       hiding (mapM_)
 --------------------------------------------------------------------------------
 
 -- | Decodes binary input flowing downstream until parsing either succeeds or
--- fails. Returns 'Nothing' on EOF.
+-- fails.
 --
 -- In case of parsing errors, a 'ParsingError' exception is thrown in the
 -- 'Pe.EitherP' proxy transformer.
@@ -32,34 +32,25 @@ decodeD
   :: (P.Proxy p, Monad m, Bin.Binary r)
   => ()
   -> Pe.EitherP ParsingError (Ps.StateP [BS.ByteString] p)
-     () (Maybe BS.ByteString) b' b m (Maybe r)
+     () (Maybe BS.ByteString) b' b m r
 decodeD = \() -> do
-    eof <- P.liftP $ Pa.isEndOfInput
-    if eof
-      then return Nothing
-      else do
-        (er, mlo) <- P.liftP $ I.parseWithMay Pa.draw Bin.get
-        P.liftP $ mapM_ Pa.unDraw mlo
-        case er of
-          Left e  -> Pe.throw e
-          Right r -> return (Just r)
+    (er, mlo) <- P.liftP (I.parseWithMay Pa.draw Bin.get)
+    P.liftP (mapM_ Pa.unDraw mlo)
+    either Pe.throw return er
+{-# INLINABLE decodeD #-}
 
 
--- | Try to decode input flowing downstream. Returns 'Just Left' in case of
--- parsing failures and 'Nothing' on EOF.
+-- | Try to decode input flowing downstream. Returns 'Left' in case of
+-- parsing failures.
 --
 -- Requests more input from upstream using 'Pa.draw', when needed.
 eitherDecodeD
   :: (Monad m, P.Proxy p, Bin.Binary r)
   => ()
   -> Ps.StateP [BS.ByteString] p
-     () (Maybe BS.ByteString) b' b m (Maybe (Either ParsingError r))
+     () (Maybe BS.ByteString) b' b m (Either ParsingError r)
 eitherDecodeD = \() -> do
-    eof <- Pa.isEndOfInput
-    if eof
-      then return Nothing
-      else do
-        (er,mlo) <- I.parseWithMay Pa.draw Bin.get
-        mapM_ Pa.unDraw mlo
-        return (Just er)
-
+    (er,mlo) <- I.parseWithMay Pa.draw Bin.get
+    mapM_ Pa.unDraw mlo
+    return er
+{-# INLINABLE eitherDecodeD #-}
