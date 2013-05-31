@@ -34,7 +34,7 @@ decodeD
   -> Pe.EitherP ParsingError (Ps.StateP [BS.ByteString] p)
      () (Maybe BS.ByteString) b' b m r
 decodeD = \() -> do
-    (er, mlo) <- P.liftP (I.parseWithMay Pa.draw Bin.get)
+    (er, mlo) <- P.liftP (I.parseWith Pa.draw Bin.get)
     P.liftP (mapM_ Pa.unDraw mlo)
     either Pe.throw return er
 {-# INLINABLE decodeD #-}
@@ -50,7 +50,7 @@ eitherDecodeD
   -> Ps.StateP [BS.ByteString] p
      () (Maybe BS.ByteString) b' b m (Either ParsingError r)
 eitherDecodeD = \() -> do
-    (er,mlo) <- I.parseWithMay Pa.draw Bin.get
+    (er,mlo) <- I.parseWith Pa.draw Bin.get
     mapM_ Pa.unDraw mlo
     return er
 {-# INLINABLE eitherDecodeD #-}
