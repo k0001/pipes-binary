@@ -83,7 +83,7 @@ encode = \r -> P.runIdentityP $ do
 --
 -- This proxy is meant to be composed in the 'P.pull' and 'P.push' categories.
 encodeD
-  :: (P.Proxy p, Monad m, Bin.Binary r)
-  => () -> P.Pipe p r BS.ByteString m r
+  :: (P.Proxy p, Monad m, Bin.Binary a)
+  => () -> P.Pipe p a BS.ByteString m r
 encodeD = P.pull P./>/ encode
 {-# INLINABLE encodeD #-}
