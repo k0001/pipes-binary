@@ -72,8 +72,7 @@ decodeD = \() -> loop where
 -- This proxy is meant to be composed in the 'P.respond' category.
 encode
   :: (P.Proxy p, Monad m, Bin.Binary r)
-  => r
-  -> p x' x () BS.ByteString m ()
+  => r -> p x' x () BS.ByteString m ()
 encode = \r -> P.runIdentityP $ do
     BLI.foldrChunks (\e a -> P.respond e >> a) (return ()) (Bin.encode r)
 {-# INLINABLE encode #-}
