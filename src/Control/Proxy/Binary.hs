@@ -60,7 +60,7 @@ decodeD
      (Maybe BS.ByteString) b m ()
 decodeD = \() -> loop where
     loop = do
-      () <- (decode P.\>\ P.pull) ()
+      P.respond =<< decode ()
       eof <- P.liftP $ Pa.isEndOfInput
       unless eof loop
 {-# INLINABLE decodeD #-}
