@@ -23,9 +23,9 @@ parseWith
   => m (Maybe BS.ByteString)
   -- ^An action that will be executed to provide the parser with more input
   -- as needed. If the action returns 'Nothing', then it's assumed no more
-  -- input is available.
+  -- input is available. 'Just BS.empty' input is discarded.
   -> Bin.Get r
-  -- ^Get parser to run on the given input.
+  -- ^Parser to run on the given input.
   -> m (Either ParsingError r, Maybe BS.ByteString)
   -- ^Either a parser error or a parsed result, together with any leftover.
 parseWith refill g = step $ Bin.runGetIncremental g
@@ -34,13 +34,14 @@ parseWith refill g = step $ Bin.runGetIncremental g
     step (Bin.Done lo _ r) = return (Right r, mayInput lo)
     step (Bin.Fail lo n m) = return (Left (ParsingError n m), mayInput lo)
 
-    -- | Like 'refill', except 'Just BS.empty' values are discarded.
+    -- | Wrap 'refill' return value so that it is suitable for 'Bin.Partial'.
     refill' = do
         mbs <- refill
         case mbs of
           Nothing -> return Nothing
-          Just bs -> if BS.null bs then refill'
-                                   else return (Just bs)
+          Just bs -> if BS.null bs
+                        then refill' -- retry on null input
+                        else return (Just bs)
 {-# INLINABLE parseWith #-}
 
 -- | Wrap @a@ in 'Just' if not-null. Otherwise, 'Nothing'.
