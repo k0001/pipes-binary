@@ -37,7 +37,7 @@ decode
   :: (P.Proxy p, Monad m, Bin.Binary r)
   => ()
   -> P.EitherP ParsingError (P.StateP [BS.ByteString] p)
-     () (Maybe BS.ByteString) b' b m r
+     () (Maybe BS.ByteString) y' y m r
 decode = \() -> do
     (er, mlo) <- P.liftP (I.parseWith Pa.draw Bin.get)
     P.liftP (mapM_ Pa.unDraw mlo)
