@@ -33,11 +33,15 @@ import           Prelude                       hiding (mapM_)
 -- In case of parsing errors, a 'ParsingError' exception is thrown in the
 -- 'Pe.EitherP' proxy transformer.
 --
--- Requests more input from upstream using 'Pa.draw' when needed. 'null' inputs
--- from upstream may result in unexpected parsing errors, you can prevent that
--- kind of errors by using the 'skipNullD' proxy upstream.
+-- Requests more input from upstream using 'Pa.draw' when needed. 'BS.null'
+-- inputs from upstream may result in unexpected EOF parsing errors, you can
+-- prevent that kind of errors by using the 'skipNullD' proxy upstream.
 --
 -- This proxy is meant to be composed in the 'P.request' category.
+
+-- In case you wonder, skipping 'BS.null' inputs manually below wouldn't help if
+-- we were trying to parse the tail of the stream and there were just 'BS.null'
+-- inputs left. That's why we just recommend using 'skipNullD' upstream.
 decode
   :: (P.Proxy p, Monad m, Bin.Binary r)
   => ()
@@ -55,8 +59,8 @@ decode = \() -> do
 -- In case of parsing errors, a 'ParsingError' exception is thrown in the
 -- 'Pe.EitherP' proxy transformer.
 --
--- Requests more input from upstream using 'Pa.draw', when needed. 'null' inputs
--- from upstream are discared and won't cause any parsing failures.
+-- Requests more input from upstream using 'Pa.draw', when needed. 'BS.null'
+-- inputs from upstream are discared and won't cause any parsing failures.
 --
 -- This proxy is meant to be composed in the 'P.pull' and 'P.push' categories.
 decodeD
@@ -97,7 +101,7 @@ encodeD = P.pull P./>/ encode
 {-# INLINABLE encodeD #-}
 
 
--- | Skips 'null' 'BS.ByteString's flowing downstream.
+-- | Skips 'BS.null' 'BS.ByteString's flowing downstream.
 skipNullD
   :: (Monad m, P.Proxy p)
   => () -> P.Pipe p BS.ByteString BS.ByteString m ()
