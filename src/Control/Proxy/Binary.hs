@@ -22,31 +22,25 @@ import qualified Control.Proxy.Trans.Either    as P
 import qualified Control.Proxy.Trans.State     as P
 import qualified Data.Binary                   as Bin
 import           Data.Foldable                 (mapM_)
+import           Data.Function                 (fix)
 import           Prelude                       hiding (mapM_)
 
 --------------------------------------------------------------------------------
 
 -- | Decodes one 'Bin.Binary' instance flowing downstream.
 --
--- In case of parsing errors, a 'ParsingError' exception is thrown in the
+-- * In case of parsing errors, a 'ParsingError' exception is thrown in the
 -- 'Pe.EitherP' proxy transformer.
 --
--- Requests more input from upstream using 'Pa.draw' when needed. 'BS.null'
--- inputs from upstream may result in unexpected EOF parsing errors, you can
--- prevent that kind of errors by using the 'skipNullD' proxy upstream.
+-- * Requests more input from upstream using 'Pa.draw' when needed.
 --
--- This proxy is meant to be composed in the 'P.request' category.
-
--- In case you wonder, skipping 'BS.null' inputs manually below wouldn't help if
--- we were trying to parse the tail of the stream and there were just 'BS.null'
--- inputs left. That's why in 'decodeD' we just recommend using
--- @P.filterD (not . BS.null)@ upstream, which gives the optimal behavior.
+-- * /Do not/ use this proxy if 'Control.Proxy.ByteString.isEndOfBytes' returns
+-- 'True', otherwise you may get unexpected parsing errors.
 decode
   :: (P.Proxy p, Monad m, Bin.Binary r)
-  => ()
-  -> P.EitherP ParsingError (P.StateP [BS.ByteString] p)
+  => P.EitherP ParsingError (P.StateP [BS.ByteString] p)
      () (Maybe BS.ByteString) y' y m r
-decode = \() -> do
+decode = do
     (er, mlo) <- P.liftP (I.parseWith Pa.draw Bin.get)
     P.liftP (mapM_ Pa.unDraw mlo)
     either P.throw return er
@@ -55,18 +49,12 @@ decode = \() -> do
 
 -- | Decodes 'Bin.Binary' instances flowing downstream until EOF.
 --
--- In case of parsing errors, a 'ParsingError' exception is thrown in the
+-- * In case of parsing errors, a 'ParsingError' exception is thrown in the
 -- 'Pe.EitherP' proxy transformer.
 --
--- Requests more input from upstream using 'Pa.draw', when needed.
+-- * Requests more input from upstream using 'Pa.draw', when needed.
 --
--- 'BS.null' input chunks from upstream will cause undesired parsing failures.
--- If you are not sure whether your input stream is free from 'BS.null' chunks,
--- you can use 'P.filterD' upstream:
---
--- > ... >-> P.filterD (not . BS.null) >-> decodeD >-> ...
---
--- This proxy is meant to be composed in the 'P.pull' category.
+-- * Empty input chunks flowing downstream will be discarded.
 decodeD
   :: (P.Proxy p, Monad m, Bin.Binary b)
   => ()
@@ -74,22 +62,21 @@ decodeD
      (Maybe BS.ByteString) b m ()
 decodeD = \() -> loop where
     loop = do
-        eof <- P.liftP Pa.isEndOfInput
-        unless eof $ do
-          () <- P.respond =<< decode ()
-          loop
+        eof <- P.liftP isEndOfBytes
+        unless eof $ decode >>= P.respond >> loop
 {-# INLINABLE decodeD #-}
 
+--------------------------------------------------------------------------------
 
 -- | Encodes the given 'Bin.Binary' instance and sends it downstream in
 -- 'BS.ByteString' chunks.
 --
 -- This proxy is meant to be composed in the 'P.respond' category.
 encode
-  :: (P.Proxy p, Monad m, Bin.Binary r)
-  => r -> p x' x () BS.ByteString m ()
-encode = \r -> P.runIdentityP $ do
-    BLI.foldrChunks (\e a -> P.respond e >> a) (return ()) (Bin.encode r)
+  :: (P.Proxy p, Monad m, Bin.Binary x)
+  => x -> p x' x () BS.ByteString m ()
+encode = \x -> P.runIdentityP $ do
+    BLI.foldrChunks (\e a -> P.respond e >> a) (return ()) (Bin.encode x)
 {-# INLINABLE encode #-}
 
 
@@ -102,4 +89,21 @@ encodeD
   => () -> P.Pipe p a BS.ByteString m r
 encodeD = P.pull P./>/ encode
 {-# INLINABLE encodeD #-}
+
+--------------------------------------------------------------------------------
+-- XXX: this function is here until pipes-bytestring exports it
+
+-- | Like 'Pa.isEndOfInput', except it also consumes and discards leading
+-- empty 'BS.ByteString' chunks.
+isEndOfBytes
+  :: (Monad m, P.Proxy p)
+  => P.StateP [BS.ByteString] p () (Maybe BS.ByteString) y' y m Bool
+isEndOfBytes = fix $ \loop -> do
+    ma <- Pa.draw
+    case ma of
+      Just a
+       | BS.null a -> loop
+       | otherwise -> Pa.unDraw a >> return False
+      Nothing      -> return True
+{-# INLINABLE isEndOfBytes #-}
 
