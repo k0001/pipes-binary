@@ -11,7 +11,7 @@ module Control.Proxy.Binary
   , encode
   , encodeD
    -- * Types
-  , I.ParsingError(..)
+  , I.DecodingError(..)
   ) where
 
 -------------------------------------------------------------------------------
@@ -39,16 +39,16 @@ import           Prelude                       hiding (mapM_)
 
 -- | Decodes one 'Bin.Binary' instance flowing downstream.
 --
--- * In case of parsing errors, a 'I.ParsingError' exception is thrown in the
+-- * In case of decoding errors, a 'I.DecodingError' exception is thrown in the
 -- 'Pe.EitherP' proxy transformer.
 --
 -- * Requests more input from upstream using 'Pa.draw' when needed.
 --
 -- * /Do not/ use this proxy if 'Control.Proxy.ByteString.isEndOfBytes' returns
--- 'True', otherwise you may get unexpected parsing errors.
+-- 'True', otherwise you may get unexpected decoding errors.
 decode
   :: (P.Proxy p, Monad m, Bin.Binary r)
-  => P.EitherP I.ParsingError (P.StateP [BS.ByteString] p)
+  => P.EitherP I.DecodingError (P.StateP [BS.ByteString] p)
      () (Maybe BS.ByteString) y' y m r
 decode = do
     (er, mlo) <- P.liftP (I.parseWith Pa.draw Bin.get)
@@ -59,7 +59,7 @@ decode = do
 
 -- | Decodes 'Bin.Binary' instances flowing downstream until end of input.
 --
--- * In case of parsing errors, a 'I.ParsingError' exception is thrown in the
+-- * In case of decoding errors, a 'I.DecodingError' exception is thrown in the
 -- 'Pe.EitherP' proxy transformer.
 --
 -- * Requests more input from upstream using 'Pa.draw', when needed.
@@ -68,7 +68,7 @@ decode = do
 decodeD
   :: (P.Proxy p, Monad m, Bin.Binary b)
   => ()
-  -> P.Pipe (P.EitherP I.ParsingError (P.StateP [BS.ByteString] p))
+  -> P.Pipe (P.EitherP I.DecodingError (P.StateP [BS.ByteString] p))
      (Maybe BS.ByteString) b m ()
 decodeD = \() -> loop where
     loop = do

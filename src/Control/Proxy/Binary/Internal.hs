@@ -6,7 +6,7 @@
 -- Use the "Control.Proxy.Binary" module instead.
 
 module Control.Proxy.Binary.Internal
-  ( ParsingError(..)
+  ( DecodingError(..)
   , parseWith
   ) where
 
@@ -20,12 +20,12 @@ import Data.Data                              (Data, Typeable)
 
 -------------------------------------------------------------------------------
 
-data ParsingError = ParsingError
+data DecodingError = DecodingError
   { peConsumed :: Bin.ByteOffset -- ^Number of bytes consumed before the error.
-  , peMessage  :: String         -- ^Parsing error description message.
+  , peMessage  :: String         -- ^Error message.
   } deriving (Show, Eq, Data, Typeable)
 
-instance Exception ParsingError
+instance Exception DecodingError
 
 -------------------------------------------------------------------------------
 
@@ -38,13 +38,13 @@ parseWith
   -- input is available.
   -> Bin.Get r
   -- ^Parser to run on the given input.
-  -> m (Either ParsingError r, Maybe BS.ByteString)
+  -> m (Either DecodingError r, Maybe BS.ByteString)
   -- ^Either a parser error or a parsed result, together with any leftover.
 parseWith refill g = step $ Bin.runGetIncremental g
   where
     step (Bin.Partial k)   = step . k =<< refill
     step (Bin.Done lo _ r) = return (Right r, mayInput lo)
-    step (Bin.Fail lo n m) = return (Left (ParsingError n m), mayInput lo)
+    step (Bin.Fail lo n m) = return (Left (DecodingError n m), mayInput lo)
 {-# INLINABLE parseWith #-}
 
 -- | Wrap @a@ in 'Just' if not-null. Otherwise, 'Nothing'.
