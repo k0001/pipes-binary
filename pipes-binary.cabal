@@ -15,7 +15,7 @@ synopsis:           Encode and decode binary streams using the pipes and binary 
 cabal-version:      >=1.8
 extra-source-files: README.md PEOPLE NEWS
 description:
-  Encode and decode binary streams using the pipes and binary libraries.
+  Encode and decode binary streams using the @Pipes@ and @binary@ libraries.
   .
   See the @NEWS@ file in the source distribution to learn about any
   important changes between version.
@@ -32,6 +32,5 @@ library
                      , pipes          (>=3.3 && <3.4)
                      , pipes-parse    (>=1.0 && <1.1)
     exposed-modules:   Control.Proxy.Binary
-                       Control.Proxy.Binary.Types
     other-modules:     Control.Proxy.Binary.Internal
     ghc-options: -Wall -O2

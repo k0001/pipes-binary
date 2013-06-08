@@ -1,19 +1,31 @@
+{-# LANGUAGE DeriveDataTypeable #-}
+
 -- | This module provides low-level integration with the @binary@ package and is
 -- likely to be modified in backwards-incompatible ways in the future.
 --
 -- Use the "Control.Proxy.Binary" module instead.
 
 module Control.Proxy.Binary.Internal
-  ( parseWith
-  , mayInput
+  ( ParsingError(..)
+  , parseWith
   ) where
 
 -------------------------------------------------------------------------------
 
 import qualified Data.ByteString              as BS
-import           Control.Proxy.Binary.Types
 import qualified Data.Binary                  as Bin
 import qualified Data.Binary.Get              as Bin
+import Control.Exception                      (Exception)
+import Data.Data                              (Data, Typeable)
+
+-------------------------------------------------------------------------------
+
+data ParsingError = ParsingError
+  { peConsumed :: Bin.ByteOffset -- ^Number of bytes consumed before the error.
+  , peMessage  :: String         -- ^Parsing error description message.
+  } deriving (Show, Eq, Data, Typeable)
+
+instance Exception ParsingError
 
 -------------------------------------------------------------------------------
 
@@ -37,6 +49,7 @@ parseWith refill g = step $ Bin.runGetIncremental g
 
 -- | Wrap @a@ in 'Just' if not-null. Otherwise, 'Nothing'.
 mayInput :: BS.ByteString -> Maybe BS.ByteString
-mayInput = \x -> if BS.null x then Nothing else Just x
-{-# INLINABLE mayInput #-}
+mayInput x | BS.null x = Nothing
+           | otherwise = Just x
+{-# INLINE mayInput #-}
 

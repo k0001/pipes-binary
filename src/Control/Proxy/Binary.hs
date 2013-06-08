@@ -5,8 +5,8 @@ module Control.Proxy.Binary
     -- * Encoding
   , encodeD
   , encode
-   -- * Exports
-  , module Control.Proxy.Binary.Types
+   -- * Types
+  , I.ParsingError(..)
   ) where
 
 -------------------------------------------------------------------------------
@@ -15,7 +15,6 @@ import qualified Data.ByteString               as BS
 import qualified Data.ByteString.Lazy.Internal as BLI
 import           Control.Monad                 (unless)
 import qualified Control.Proxy                 as P
-import           Control.Proxy.Binary.Types
 import qualified Control.Proxy.Binary.Internal as I
 import qualified Control.Proxy.Parse           as Pa
 import qualified Control.Proxy.Trans.Either    as P
@@ -38,7 +37,7 @@ import           Prelude                       hiding (mapM_)
 -- 'True', otherwise you may get unexpected parsing errors.
 decode
   :: (P.Proxy p, Monad m, Bin.Binary r)
-  => P.EitherP ParsingError (P.StateP [BS.ByteString] p)
+  => P.EitherP I.ParsingError (P.StateP [BS.ByteString] p)
      () (Maybe BS.ByteString) y' y m r
 decode = do
     (er, mlo) <- P.liftP (I.parseWith Pa.draw Bin.get)
@@ -58,7 +57,7 @@ decode = do
 decodeD
   :: (P.Proxy p, Monad m, Bin.Binary b)
   => ()
-  -> P.Pipe (P.EitherP ParsingError (P.StateP [BS.ByteString] p))
+  -> P.Pipe (P.EitherP I.ParsingError (P.StateP [BS.ByteString] p))
      (Maybe BS.ByteString) b m ()
 decodeD = \() -> loop where
     loop = do
@@ -70,8 +69,6 @@ decodeD = \() -> loop where
 
 -- | Encodes the given 'Bin.Binary' instance and sends it downstream in
 -- 'BS.ByteString' chunks.
---
--- This proxy is meant to be composed in the 'P.respond' category.
 encode
   :: (P.Proxy p, Monad m, Bin.Binary x)
   => x -> p x' x () BS.ByteString m ()
@@ -82,13 +79,12 @@ encode = \x -> P.runIdentityP $ do
 
 -- | Encodes 'Bin.Binary' instances flowing downstream, each in possibly more
 -- than one 'BS.ByteString'.
---
--- This proxy is meant to be composed in the 'P.pull' category.
 encodeD
   :: (P.Proxy p, Monad m, Bin.Binary a)
   => () -> P.Pipe p a BS.ByteString m r
 encodeD = P.pull P./>/ encode
 {-# INLINABLE encodeD #-}
+
 
 --------------------------------------------------------------------------------
 -- XXX: this function is here until pipes-bytestring exports it
