@@ -1,10 +1,15 @@
+-- | This module exports facilities that allows you to encode and decode
+-- streams of 'Bin.Binary' values using the @pipes@ and @pipes-parse@ libraries.
+
 module Control.Proxy.Binary
   ( -- * Decoding
-    decodeD
-  , decode
+    -- $decoding
+    decode
+  , decodeD
     -- * Encoding
-  , encodeD
+    -- $encoding
   , encode
+  , encodeD
    -- * Types
   , I.ParsingError(..)
   ) where
@@ -25,10 +30,16 @@ import           Data.Function                 (fix)
 import           Prelude                       hiding (mapM_)
 
 --------------------------------------------------------------------------------
+-- $decoding
+--
+-- There are two different 'Bin.Binary' decoding facilities exported by this
+-- module, and choosing between them is easy: If you need to interleave decoding
+-- with other stream effects you must use 'decode', otherwise you may use the
+-- simpler 'decodeD'.
 
 -- | Decodes one 'Bin.Binary' instance flowing downstream.
 --
--- * In case of parsing errors, a 'ParsingError' exception is thrown in the
+-- * In case of parsing errors, a 'I.ParsingError' exception is thrown in the
 -- 'Pe.EitherP' proxy transformer.
 --
 -- * Requests more input from upstream using 'Pa.draw' when needed.
@@ -46,9 +57,9 @@ decode = do
 {-# INLINABLE decode #-}
 
 
--- | Decodes 'Bin.Binary' instances flowing downstream until EOF.
+-- | Decodes 'Bin.Binary' instances flowing downstream until end of input.
 --
--- * In case of parsing errors, a 'ParsingError' exception is thrown in the
+-- * In case of parsing errors, a 'I.ParsingError' exception is thrown in the
 -- 'Pe.EitherP' proxy transformer.
 --
 -- * Requests more input from upstream using 'Pa.draw', when needed.
@@ -66,6 +77,12 @@ decodeD = \() -> loop where
 {-# INLINABLE decodeD #-}
 
 --------------------------------------------------------------------------------
+-- $encoding
+--
+-- There are two different 'Bin.Binary' encoding facilities exported by this
+-- module, and choosing between them is easy: If you need to interleave encoding
+-- with other stream effects you must use 'encode', otherwise you may use the
+-- simpler 'encodeD'.
 
 -- | Encodes the given 'Bin.Binary' instance and sends it downstream in
 -- 'BS.ByteString' chunks.
@@ -78,7 +95,7 @@ encode = \x -> P.runIdentityP $ do
 
 
 -- | Encodes 'Bin.Binary' instances flowing downstream, each in possibly more
--- than one 'BS.ByteString'.
+-- than one 'BS.ByteString' chunk.
 encodeD
   :: (P.Proxy p, Monad m, Bin.Binary a)
   => () -> P.Pipe p a BS.ByteString m r
