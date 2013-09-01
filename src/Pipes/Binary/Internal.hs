@@ -3,20 +3,20 @@
 -- | This module provides low-level integration with the @binary@ package and is
 -- likely to be modified in backwards-incompatible ways in the future.
 --
--- Use the "Control.Proxy.Binary" module instead.
+-- Use the "Pipes.Binary" module instead.
 
-module Control.Proxy.Binary.Internal
+module Pipes.Binary.Internal
   ( DecodingError(..)
   , parseWith
   ) where
 
 -------------------------------------------------------------------------------
 
+import           Control.Exception            (Exception)
 import qualified Data.ByteString              as BS
 import qualified Data.Binary                  as Bin
 import qualified Data.Binary.Get              as Bin
-import Control.Exception                      (Exception)
-import Data.Data                              (Data, Typeable)
+import           Data.Data                    (Data, Typeable)
 
 -------------------------------------------------------------------------------
 

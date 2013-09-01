@@ -1,5 +1,5 @@
 name:               pipes-binary
-version:            0.1.0.0
+version:            0.2.0
 license:            BSD3
 license-file:       LICENSE
 copyright:          Copyright (c) Renzo Carbonara 2013
@@ -29,8 +29,8 @@ library
     build-depends:     base           (==4.*)
                      , binary         (>=0.7 && <0.8)
                      , bytestring     (>=0.9.2.1)
-                     , pipes          (>=3.3 && <3.4)
-                     , pipes-parse    (>=1.0 && <1.1)
-    exposed-modules:   Control.Proxy.Binary
-    other-modules:     Control.Proxy.Binary.Internal
+                     , pipes          (>=4.0 && <4.1)
+                     , pipes-parse    (>=2.0 && <2.1)
+    exposed-modules:   Pipes.Binary
+    other-modules:     Pipes.Binary.Internal
     ghc-options: -Wall -O2
