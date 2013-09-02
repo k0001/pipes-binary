@@ -44,8 +44,8 @@ import qualified Data.Binary                   as Bin
 -- * /Do not/ use this proxy if 'Pipes.ByteString.isEndOfBytes' returns
 -- 'True', otherwise you may get unexpected decoding errors.
 decode
-  :: (Monad m, Bin.Binary r)
-  => Pp.StateT (Producer B.ByteString m r) m (Either I.DecodingError r)
+  :: (Monad m, Bin.Binary b)
+  => Pp.StateT (Producer B.ByteString m r) m (Either I.DecodingError b)
 decode = do
     (er, mlo) <- I.parseWith Pp.draw Bin.get
     case mlo of
@@ -65,8 +65,8 @@ decode = do
 -- * Empty input chunks flowing downstream will be discarded.
 decodeMany
   :: (Monad m, Bin.Binary b)
-  => Producer' B.ByteString m b  -- ^Producer from which to draw input.
-  -> Producer' b m (Either (I.DecodingError, Producer B.ByteString m b) ())
+  => Producer B.ByteString m r  -- ^Producer from which to draw input.
+  -> Producer' b m (Either (I.DecodingError, Producer B.ByteString m r) ())
 decodeMany src = do
     (me, src') <- P.runStateP src go
     return $ case me of
