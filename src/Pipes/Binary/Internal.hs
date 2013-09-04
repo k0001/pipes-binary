@@ -16,7 +16,6 @@ module Pipes.Binary.Internal
 import           Control.Exception            (Exception)
 import           Control.Monad.Trans.Error    (Error)
 import qualified Data.ByteString              as B
-import qualified Data.Binary                  as Bin
 import qualified Data.Binary.Get              as Get
 import           Data.Data                    (Data, Typeable)
 import           Pipes                        (Producer)
@@ -40,7 +39,7 @@ instance Monad m => Error (DecodingError, Producer B.ByteString m r)
 
 -- | Run a 'Get.Get' drawing input from the given monadic action as needed.
 parseWith
-  :: (Monad m, Bin.Binary r)
+  :: Monad m
   => m (Maybe B.ByteString)
   -- ^An action that will be executed to provide the parser with more input
   -- as needed. If the action returns 'Nothing', then it's assumed no more
