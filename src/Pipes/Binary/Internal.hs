@@ -23,6 +23,7 @@ import           Pipes                        (Producer)
 
 -------------------------------------------------------------------------------
 
+-- | A 'Get.Get' decoding error, as provided by 'Get.Fail'.
 data DecodingError = DecodingError
   { peConsumed :: Get.ByteOffset -- ^Number of bytes consumed before the error.
   , peMessage  :: String         -- ^Error message.

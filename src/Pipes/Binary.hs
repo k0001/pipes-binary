@@ -6,11 +6,9 @@
 
 module Pipes.Binary
   ( -- * Decoding
-    -- $decoding
     decode
   , decodeMany
     -- * Encoding
-    -- $encoding
   , encode
    -- * Types
   , I.DecodingError(..)
@@ -39,14 +37,8 @@ import           Data.Binary.Get               (ByteOffset)
 -- [From "Data.Binary.Get"] 'ByteOffset'
 
 --------------------------------------------------------------------------------
--- $decoding
---
--- There are two different 'Bin.Binary' decoding facilities exported by this
--- module, and choosing between them is easy: If you need to interleave decoding
--- with other stream effects you must use 'decode', otherwise you may use the
--- simpler 'decodeD'.
 
--- | Tries to decode leading output from the underlying 'Producer' into a
+-- | Try to decode leading output from the underlying 'Producer' into a
 -- 'Bin.Binary' instance, returning either a 'I.DecodingError' on failure, or a
 -- pair with the decoded entity together with the number of bytes consumed in
 -- order to produce it.
