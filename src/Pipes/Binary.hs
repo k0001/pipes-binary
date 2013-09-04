@@ -5,11 +5,13 @@
 -- @pipes-parse@ package and assumes you understand how to use those libraries.
 
 module Pipes.Binary
-  ( -- * Decoding
-    decode
+  ( -- * @Binary@ instances
+    encode
+  , decode
   , decodeMany
-    -- * Encoding
-  , encode
+    -- * @Get@ monads
+  , decodeGet
+  , decodeGetMany
    -- * Types
   , I.DecodingError(..)
    -- * Exports
@@ -47,14 +49,23 @@ import           Data.Binary.Get               (ByteOffset)
 -- 'True', otherwise you may get unexpected decoding errors.
 decode
   :: (Monad m, Bin.Binary b)
-  => Pp.StateT (Producer B.ByteString m r) m (Either I.DecodingError (ByteOffset, b))
-decode = do
-    (er, mlo) <- I.parseWith Pp.draw Bin.get
+  => Pp.StateT (Producer B.ByteString m r) m
+               (Either I.DecodingError (ByteOffset, b)) -- ^
+decode = decodeGet Bin.get
+{-# INLINABLE decode #-}
+
+-- | Like 'decode', except it takes an explicit 'Bin.Get' monad.
+decodeGet
+  :: Monad m
+  => Bin.Get b  -- ^
+  -> Pp.StateT (Producer B.ByteString m r) m (Either I.DecodingError (ByteOffset, b))
+decodeGet get = do
+    (er, mlo) <- I.parseWith Pp.draw get
     case mlo of
       Just lo -> Pp.unDraw lo
       Nothing -> return ()
     return er
-{-# INLINABLE decode #-}
+{-# INLINABLE decodeGet #-}
 
 -- | Continuously decode output from the given 'Producer' into a 'Bin.Binary'
 -- instance, sending downstream pairs of each successfully decoded entity
@@ -83,7 +94,17 @@ decodeMany
   => Producer B.ByteString m r  -- ^Producer from which to draw input.
   -> Producer' (ByteOffset, b) m
                (Either (I.DecodingError, Producer B.ByteString m r) ())
-decodeMany src = do
+decodeMany src = decodeGetMany Bin.get src
+{-# INLINABLE decodeMany #-}
+
+-- | Like 'decodeMany', except it takes an explicit 'Bin.Get' monad.
+decodeGetMany
+  :: Monad m
+  => Bin.Get b
+  -> Producer B.ByteString m r  -- ^Producer from which to draw input.
+  -> Producer' (ByteOffset, b) m
+               (Either (I.DecodingError, Producer B.ByteString m r) ())
+decodeGetMany get src = do
     (me, src') <- P.runStateP src go
     return $ case me of
       Just e  -> Left  (e, src')
@@ -94,11 +115,11 @@ decodeMany src = do
         if eof
           then return Nothing
           else do
-            eb <- lift decode
+            eb <- lift (decodeGet get)
             case eb of
               Left  e -> return (Just e)
               Right b -> yield b >> go
-{-# INLINABLE decodeMany #-}
+{-# INLINABLE decodeGetMany #-}
 
 --------------------------------------------------------------------------------
 
