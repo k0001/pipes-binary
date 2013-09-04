@@ -12,10 +12,10 @@ module Pipes.Binary
     -- * @Get@ monads
   , decodeGet
   , decodeGetMany
-   -- * Types
+    -- * Types
   , I.DecodingError(..)
-   -- * Exports
-   -- $exports
+    -- * Exports
+    -- $exports
   , module Data.Binary.Get
   ) where
 
@@ -84,7 +84,7 @@ decodeGet get = do
 --   'Proxy' that's not so flexible about the return types it accepts.
 --
 --   @
---   'P.errorP' . 'parseMany'
+--   'P.errorP' . 'decodeMany'
 --      :: ('Monad' m, 'Bin.Binary' b)
 --      => 'Producer' 'B.ByteString' m r
 --      -> 'Producer'' ('ByteOffset', b) ('Control.Monad.Trans.Error.ErrorT' ('I.DecodingError', 'Producer' 'B.ByteString' m r) m) ()
