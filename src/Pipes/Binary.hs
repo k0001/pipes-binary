@@ -9,9 +9,11 @@ module Pipes.Binary
     encode
   , decode
   , decodeMany
-    -- * @Get@ monads
+    -- * @Get@ monad
   , decodeGet
   , decodeGetMany
+    -- * @Put@ monad
+  , encodePut
     -- * Types
   , I.DecodingError(..)
     -- * Exports
@@ -28,15 +30,22 @@ import           Pipes.Core
 import qualified Pipes.Binary.Internal         as I
 import qualified Pipes.Lift                    as P
 import qualified Pipes.Parse                   as Pp
-import qualified Data.Binary                   as Bin
-import           Data.Binary.Get               (ByteOffset)
-
+import qualified Data.Binary                   as Bin (get, put)
+import qualified Data.Binary.Put               as Put (runPut)
 --------------------------------------------------------------------------------
+import           Data.Binary                   (Binary)
+import           Data.Binary.Get               (ByteOffset, Get)
+import           Data.Binary.Put               (Put)
+
 -- $exports
 --
 -- The following types are re-exported on this module for your convenience:
 --
--- [From "Data.Binary.Get"] 'ByteOffset'
+-- [From "Data.Binary"] 'Binary'.
+--
+-- [From "Data.Binary.Get"] 'Get', 'ByteOffset'.
+--
+-- [From "Data.Binary.Put"] 'Put'.
 
 --------------------------------------------------------------------------------
 
@@ -48,7 +57,7 @@ import           Data.Binary.Get               (ByteOffset)
 -- * /Do not/ use this function if 'Pipes.ByteString.isEndOfBytes' returns
 -- 'True', otherwise you may get unexpected decoding errors.
 decode
-  :: (Monad m, Bin.Binary b)
+  :: (Monad m, Binary b)
   => Pp.StateT (Producer B.ByteString m r) m
                (Either I.DecodingError (ByteOffset, b)) -- ^
 decode = decodeGet Bin.get
@@ -57,8 +66,9 @@ decode = decodeGet Bin.get
 -- | Like 'decode', except it takes an explicit 'Bin.Get' monad.
 decodeGet
   :: Monad m
-  => Bin.Get b  -- ^
-  -> Pp.StateT (Producer B.ByteString m r) m (Either I.DecodingError (ByteOffset, b))
+  => Get b  -- ^
+  -> Pp.StateT (Producer B.ByteString m r) m
+               (Either I.DecodingError (ByteOffset, b))
 decodeGet get = do
     (er, mlo) <- I.parseWith Pp.draw get
     case mlo of
@@ -85,12 +95,12 @@ decodeGet get = do
 --
 --   @
 --   'P.errorP' . 'decodeMany'
---      :: ('Monad' m, 'Bin.Binary' b)
+--      :: ('Monad' m, 'Binary' b)
 --      => 'Producer' 'B.ByteString' m r
 --      -> 'Producer'' ('ByteOffset', b) ('Control.Monad.Trans.Error.ErrorT' ('I.DecodingError', 'Producer' 'B.ByteString' m r) m) ()
 --   @
 decodeMany
-  :: (Monad m, Bin.Binary b)
+  :: (Monad m, Binary b)
   => Producer B.ByteString m r  -- ^Producer from which to draw input.
   -> Producer' (ByteOffset, b) m
                (Either (I.DecodingError, Producer B.ByteString m r) ())
@@ -100,7 +110,7 @@ decodeMany src = decodeGetMany Bin.get src
 -- | Like 'decodeMany', except it takes an explicit 'Bin.Get' monad.
 decodeGetMany
   :: Monad m
-  => Bin.Get b
+  => Get b
   -> Producer B.ByteString m r  -- ^Producer from which to draw input.
   -> Producer' (ByteOffset, b) m
                (Either (I.DecodingError, Producer B.ByteString m r) ())
@@ -125,10 +135,15 @@ decodeGetMany get src = do
 
 -- | Encodes the given 'Bin.Binary' instance and sends it downstream in
 -- 'BS.ByteString' chunks.
-encode :: (Monad m, Bin.Binary x) => x -> Producer' B.ByteString m ()
-encode = \x -> do
-    BLI.foldrChunks (\e a -> respond e >> a) (return ()) (Bin.encode x)
+encode :: (Monad m, Binary x) => x -> Producer' B.ByteString m ()
+encode = \x -> encodePut (Bin.put x)
 {-# INLINABLE encode #-}
+
+-- | Like 'encode', except it takes an explicit 'Bin.Put' monad.
+encodePut :: Monad m => Put -> Producer' B.ByteString m ()
+encodePut = \put -> do
+    BLI.foldrChunks (\e a -> respond e >> a) (return ()) (Put.runPut put)
+{-# INLINABLE encodePut #-}
 
 --------------------------------------------------------------------------------
 -- XXX: this function is here until pipes-bytestring exports it
