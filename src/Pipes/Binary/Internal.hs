@@ -26,7 +26,7 @@ import           Pipes                        (Producer)
 data DecodingError = DecodingError
   { peConsumed :: Get.ByteOffset -- ^Number of bytes consumed before the error.
   , peMessage  :: String         -- ^Error message.
-  } deriving (Show, Eq, Data, Typeable)
+  } deriving (Show, Read, Eq, Data, Typeable)
 
 instance Exception DecodingError
 instance Error     DecodingError
