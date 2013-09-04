@@ -1,7 +1,8 @@
 {-# LANGUAGE RankNTypes #-}
 
 -- | This module exports facilities that allows you to encode and decode
--- streams of 'Bin.Binary' values using the @pipes@ and @pipes-parse@ libraries.
+-- streams of 'Bin.Binary' values. It builds on top of the @pipes@ and
+-- @pipes-parse@ package and assumes you understand how to use those libraries.
 
 module Pipes.Binary
   ( -- * Decoding
@@ -34,14 +35,12 @@ import qualified Data.Binary                   as Bin
 -- with other stream effects you must use 'decode', otherwise you may use the
 -- simpler 'decodeD'.
 
--- | Decodes one 'Bin.Binary' instance flowing downstream.
+-- | Tries to decode leading output from the underlying 'Producer' into a
+-- 'Bin.Binary' instance, returning either a 'I.DecodingError' on failure, or a
+-- pair with the decoded entity together with the number of bytes consumed in
+-- order to produce it.
 --
--- * In case of decoding errors, a 'I.DecodingError' exception is thrown in the
--- 'Pe.EitherP' proxy transformer.
---
--- * Requests more input from upstream using 'Pa.draw' when needed.
---
--- * /Do not/ use this proxy if 'Pipes.ByteString.isEndOfBytes' returns
+-- * /Do not/ use this function if 'Pipes.ByteString.isEndOfBytes' returns
 -- 'True', otherwise you may get unexpected decoding errors.
 decode
   :: (Monad m, Bin.Binary b)
@@ -54,15 +53,28 @@ decode = do
     return er
 {-# INLINABLE decode #-}
 
-
--- | Decodes 'Bin.Binary' instances flowing downstream until end of input.
+-- | Continuously decode output from the given 'Producer' into a 'Bin.Binary'
+-- instance, sending downstream pairs of each successfully decoded entity
+-- together with the number of bytes consumed in order to produce it.
 --
--- * In case of decoding errors, a 'I.DecodingError' exception is thrown in the
--- 'Pe.EitherP' proxy transformer.
+-- This 'Producer' runs until it either runs out of input, in which case it
+-- returns @'Right' ()@, or until a decoding failure occurs, in which case
+-- it returns a 'Left' providing the 'I.DecodingError' and a 'Producer' with any
+-- leftovers.
 --
--- * Requests more input from upstream using 'Pa.draw', when needed.
+-- Hints:
 --
--- * Empty input chunks flowing downstream will be discarded.
+-- * You can use 'P.errorP' to promote the 'Either' return value to an
+--   'Control.Monad.Trans.Error.ErrorT' monad transformer, which might be
+--   particularly handy if you are trying compose this 'Producer' with another
+--   'Proxy' that's not so flexible about the return types it accepts.
+--
+--   @
+--   'P.errorP' . 'parseMany'
+--      :: ('Monad' m, 'Bin.Binary' b)
+--      => 'Producer' 'B.ByteString' m r
+--      -> 'Producer'' ('Int', b) ('Control.Monad.Trans.Error.ErrorT' ('I.DecodingError', 'Producer' 'B.ByteString' m r) m) ()
+--   @
 decodeMany
   :: (Monad m, Bin.Binary b)
   => Producer B.ByteString m r  -- ^Producer from which to draw input.
@@ -85,12 +97,6 @@ decodeMany src = do
 {-# INLINABLE decodeMany #-}
 
 --------------------------------------------------------------------------------
--- $encoding
---
--- There are two different 'Bin.Binary' encoding facilities exported by this
--- module, and choosing between them is easy: If you need to interleave encoding
--- with other stream effects you must use 'encode', otherwise you may use the
--- simpler 'encodeD'.
 
 -- | Encodes the given 'Bin.Binary' instance and sends it downstream in
 -- 'BS.ByteString' chunks.
@@ -102,9 +108,8 @@ encode = \x -> do
 --------------------------------------------------------------------------------
 -- XXX: this function is here until pipes-bytestring exports it
 
--- | Like 'Pa.isEndOfInput', except it also consumes and discards leading
--- empty 'BS.ByteString' chunks.
-
+-- | Checks if the underlying 'Producer' has any bytes left.
+-- Leading 'BS.empty' chunks are discarded.
 isEndOfBytes :: Monad m => Pp.StateT (Producer B.ByteString m r) m Bool
 isEndOfBytes = do
     ma <- Pp.draw
