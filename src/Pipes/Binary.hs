@@ -14,6 +14,9 @@ module Pipes.Binary
   , encode
    -- * Types
   , I.DecodingError(..)
+   -- * Exports
+   -- $exports
+  , module Data.Binary.Get
   ) where
 
 -------------------------------------------------------------------------------
@@ -26,6 +29,14 @@ import qualified Pipes.Binary.Internal         as I
 import qualified Pipes.Lift                    as P
 import qualified Pipes.Parse                   as Pp
 import qualified Data.Binary                   as Bin
+import           Data.Binary.Get               (ByteOffset)
+
+--------------------------------------------------------------------------------
+-- $exports
+--
+-- The following types are re-exported on this module for your convenience:
+--
+-- [From "Data.Binary.Get"] 'ByteOffset'
 
 --------------------------------------------------------------------------------
 -- $decoding
@@ -44,7 +55,7 @@ import qualified Data.Binary                   as Bin
 -- 'True', otherwise you may get unexpected decoding errors.
 decode
   :: (Monad m, Bin.Binary b)
-  => Pp.StateT (Producer B.ByteString m r) m (Either I.DecodingError b)
+  => Pp.StateT (Producer B.ByteString m r) m (Either I.DecodingError (ByteOffset, b))
 decode = do
     (er, mlo) <- I.parseWith Pp.draw Bin.get
     case mlo of
@@ -73,12 +84,13 @@ decode = do
 --   'P.errorP' . 'parseMany'
 --      :: ('Monad' m, 'Bin.Binary' b)
 --      => 'Producer' 'B.ByteString' m r
---      -> 'Producer'' ('Int', b) ('Control.Monad.Trans.Error.ErrorT' ('I.DecodingError', 'Producer' 'B.ByteString' m r) m) ()
+--      -> 'Producer'' ('ByteOffset', b) ('Control.Monad.Trans.Error.ErrorT' ('I.DecodingError', 'Producer' 'B.ByteString' m r) m) ()
 --   @
 decodeMany
   :: (Monad m, Bin.Binary b)
   => Producer B.ByteString m r  -- ^Producer from which to draw input.
-  -> Producer' b m (Either (I.DecodingError, Producer B.ByteString m r) ())
+  -> Producer' (ByteOffset, b) m
+               (Either (I.DecodingError, Producer B.ByteString m r) ())
 decodeMany src = do
     (me, src') <- P.runStateP src go
     return $ case me of

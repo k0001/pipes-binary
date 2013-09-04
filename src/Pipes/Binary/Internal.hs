@@ -17,14 +17,14 @@ import           Control.Exception            (Exception)
 import           Control.Monad.Trans.Error    (Error)
 import qualified Data.ByteString              as B
 import qualified Data.Binary                  as Bin
-import qualified Data.Binary.Get              as Bin
+import qualified Data.Binary.Get              as Get
 import           Data.Data                    (Data, Typeable)
 import           Pipes                        (Producer)
 
 -------------------------------------------------------------------------------
 
 data DecodingError = DecodingError
-  { peConsumed :: Bin.ByteOffset -- ^Number of bytes consumed before the error.
+  { peConsumed :: Get.ByteOffset -- ^Number of bytes consumed before the error.
   , peMessage  :: String         -- ^Error message.
   } deriving (Show, Eq, Data, Typeable)
 
@@ -37,22 +37,23 @@ instance Monad m => Error (DecodingError, Producer B.ByteString m r)
 
 -------------------------------------------------------------------------------
 
--- | Run a parser drawing input from the given monadic action as needed.
+-- | Run a 'Get.Get' drawing input from the given monadic action as needed.
 parseWith
   :: (Monad m, Bin.Binary r)
   => m (Maybe B.ByteString)
   -- ^An action that will be executed to provide the parser with more input
   -- as needed. If the action returns 'Nothing', then it's assumed no more
   -- input is available.
-  -> Bin.Get r
+  -> Get.Get r
   -- ^Parser to run on the given input.
-  -> m (Either DecodingError r, Maybe B.ByteString)
-  -- ^Either a parser error or a parsed result, together with any leftover.
-parseWith refill g = step $ Bin.runGetIncremental g
+  -> m (Either DecodingError (Get.ByteOffset, r), Maybe B.ByteString)
+  -- ^Either a decoding error or a pair of a result and the number of bytes
+  -- consumed, as well as an any leftovers.
+parseWith refill g = step (Get.runGetIncremental g)
   where
-    step (Bin.Partial k)   = step . k =<< refill
-    step (Bin.Done lo _ r) = return (Right r, mayInput lo)
-    step (Bin.Fail lo n m) = return (Left (DecodingError n m), mayInput lo)
+    step (Get.Partial k)   = refill >>= \a -> step (k a)
+    step (Get.Done lo n r) = return (Right (n, r), mayInput lo)
+    step (Get.Fail lo n m) = return (Left (DecodingError n m), mayInput lo)
 {-# INLINABLE parseWith #-}
 
 -- | Wrap @a@ in 'Just' if not-null. Otherwise, 'Nothing'.
