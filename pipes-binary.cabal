@@ -6,7 +6,7 @@ copyright:          Copyright (c) Renzo Carbonara 2013
 author:             Renzo Carbonara
 maintainer:         renzocarbonaraλgmail.com
 stability:          Experimental
-tested-with:        GHC == 7.4.1
+tested-with:        GHC == 7.6.3
 homepage:           https://github.com/k0001/pipes-binary
 bug-reports:        https://github.com/k0001/pipes-binary/issues
 category:           Pipes
@@ -15,7 +15,7 @@ synopsis:           Encode and decode binary streams using the pipes and binary 
 cabal-version:      >=1.8
 extra-source-files: README.md PEOPLE NEWS
 description:
-  Encode and decode binary streams using the @pipes@ and @binary@ libraries.
+  Encode and decode binary Pipes streams using the @binary@ library.
   .
   See the @NEWS@ file in the source distribution to learn about any
   important changes between version.

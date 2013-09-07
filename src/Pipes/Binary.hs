@@ -1,8 +1,8 @@
 {-# LANGUAGE RankNTypes #-}
 
--- | This module exports facilities that allows you to encode and decode
--- streams of 'Bin.Binary' values. It builds on top of the @pipes@ and
--- @pipes-parse@ package and assumes you understand how to use those libraries.
+-- | This module exports facilities that allow you to encode and decode Pipes
+-- streams of binary values. It builds on top of the @binary@, @pipes@ and
+-- @pipes-parse@ libraries, and assumes you know how to use those libraries.
 
 module Pipes.Binary
   ( -- * @Binary@ instances
@@ -55,7 +55,7 @@ import           Data.Binary.Put               (Put)
 -- pair with the decoded entity together with the number of bytes consumed in
 -- order to produce it.
 --
--- * /Do not/ use this function if 'isEndOfBytes' returns 'True', otherwise you
+-- /Do not/ use this function if 'isEndOfBytes' returns 'True', otherwise you
 -- may get unexpected decoding errors.
 decode
   :: (Monad m, Binary b)
@@ -82,11 +82,10 @@ decodeGet get = do
 -- instance, sending downstream pairs of each successfully decoded entity
 -- together with the number of bytes consumed in order to produce it.
 --
--- This 'Producer' runs until it either runs out of input, in which case it
--- returns @'Right' ()@, or until a decoding failure occurs, in which case
--- it returns a 'Left' providing the 'I.DecodingError' and a 'Producer' with any
--- leftovers. You can use 'P.errorP' to turn the 'Either' return value into an
--- 'Control.Monad.Trans.Error.ErrorT' monad transformer.
+-- This 'Producer' runs until it either runs out of input or a decoding
+-- failure occurs, in which case it returns 'Left' with a 'I.DecodingError' and
+-- a 'Producer' with any leftovers. You can use 'P.errorP' to turn the 'Either'
+-- return value into an 'Control.Monad.Trans.Error.ErrorT' monad transformer.
 decodeMany
   :: (Monad m, Binary b)
   => Producer B.ByteString m r  -- ^Producer from which to draw input.
