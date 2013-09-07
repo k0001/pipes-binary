@@ -85,21 +85,8 @@ decodeGet get = do
 -- This 'Producer' runs until it either runs out of input, in which case it
 -- returns @'Right' ()@, or until a decoding failure occurs, in which case
 -- it returns a 'Left' providing the 'I.DecodingError' and a 'Producer' with any
--- leftovers.
---
--- Hints:
---
--- * You can use 'P.errorP' to promote the 'Either' return value to an
---   'Control.Monad.Trans.Error.ErrorT' monad transformer, which might be
---   particularly handy if you are trying compose this 'Producer' with another
---   'Proxy' that's not so flexible about the return types it accepts.
---
---   @
---   'P.errorP' . 'decodeMany'
---      :: ('Monad' m, 'Binary' b)
---      => 'Producer' 'B.ByteString' m r
---      -> 'Producer'' ('ByteOffset', b) ('Control.Monad.Trans.Error.ErrorT' ('I.DecodingError', 'Producer' 'B.ByteString' m r) m) ()
---   @
+-- leftovers. You can use 'P.errorP' to turn the 'Either' return value into an
+-- 'Control.Monad.Trans.Error.ErrorT' monad transformer.
 decodeMany
   :: (Monad m, Binary b)
   => Producer B.ByteString m r  -- ^Producer from which to draw input.
