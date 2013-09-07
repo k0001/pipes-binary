@@ -70,7 +70,7 @@ decodeGet
   -> Pp.StateT (Producer B.ByteString m r) m
                (Either I.DecodingError (ByteOffset, b))
 decodeGet get = do
-    (er, mlo) <- I.parseWith Pp.draw get
+    (er, mlo) <- I.parseWithDraw get
     case mlo of
       Just lo -> Pp.unDraw lo
       Nothing -> return ()
@@ -154,9 +154,8 @@ isEndOfBytes :: Monad m => Pp.StateT (Producer B.ByteString m r) m Bool
 isEndOfBytes = do
     ma <- Pp.draw
     case ma of
-      Just a
+      Left  _      -> return True
+      Right a
        | B.null a  -> isEndOfBytes
        | otherwise -> Pp.unDraw a >> return False
-      Nothing      -> return True
 {-# INLINABLE isEndOfBytes #-}
-

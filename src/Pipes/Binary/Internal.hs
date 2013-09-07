@@ -8,7 +8,7 @@
 
 module Pipes.Binary.Internal
   ( DecodingError(..)
-  , parseWith
+  , parseWithDraw
   ) where
 
 -------------------------------------------------------------------------------
@@ -19,6 +19,7 @@ import qualified Data.ByteString              as B
 import qualified Data.Binary.Get              as Get
 import           Data.Data                    (Data, Typeable)
 import           Pipes                        (Producer)
+import qualified Pipes.Parse                  as Pp
 
 -------------------------------------------------------------------------------
 
@@ -49,16 +50,30 @@ parseWith
   -> m (Either DecodingError (Get.ByteOffset, r), Maybe B.ByteString)
   -- ^Either a decoding error or a pair of a result and the number of bytes
   -- consumed, as well as an any leftovers.
-parseWith refill g = step (Get.runGetIncremental g)
+parseWith refill = \g -> step (Get.runGetIncremental g)
   where
     step (Get.Partial k)   = refill >>= \a -> step (k a)
     step (Get.Done lo n r) = return (Right (n, r), mayInput lo)
     step (Get.Fail lo n m) = return (Left (DecodingError n m), mayInput lo)
 {-# INLINABLE parseWith #-}
 
+-- | Run a parser drawing input from the underlying 'Producer'.
+parseWithDraw
+  :: Monad m
+  => Get.Get b -- ^Parser to run on the given input.
+  -> Pp.StateT (Producer B.ByteString m r) m
+               (Either DecodingError (Get.ByteOffset, b), Maybe B.ByteString)
+parseWithDraw = parseWith $ do
+    ea <- Pp.draw
+    return (case ea of
+      Left  _ -> Nothing
+      Right a -> Just a)
+{-# INLINABLE parseWithDraw #-}
+
+--------------------------------------------------------------------------------
+
 -- | Wrap @a@ in 'Just' if not-null. Otherwise, 'Nothing'.
 mayInput :: B.ByteString -> Maybe B.ByteString
 mayInput x | B.null x = Nothing
            | otherwise = Just x
 {-# INLINE mayInput #-}
-
