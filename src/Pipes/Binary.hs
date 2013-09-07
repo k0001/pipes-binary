@@ -114,7 +114,7 @@ decodeGetMany get src = do
             ra <- lift Pp.draw
             case ra of
               Left  r -> return (Right r)
-              Right _ -> error "parseMany: The impossible happened!"
+              Right _ -> error "Pipes.Binary.decodeGetMany: impossible!"
           else do
             eb <- lift (decodeGet get)
             case eb of
