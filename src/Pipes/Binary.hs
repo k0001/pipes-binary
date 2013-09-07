@@ -18,6 +18,7 @@ module Pipes.Binary
   , I.DecodingError(..)
     -- * Exports
     -- $exports
+  , isEndOfBytes
   , module Data.Binary.Get
   ) where
 
@@ -54,8 +55,8 @@ import           Data.Binary.Put               (Put)
 -- pair with the decoded entity together with the number of bytes consumed in
 -- order to produce it.
 --
--- * /Do not/ use this function if 'Pipes.ByteString.isEndOfBytes' returns
--- 'True', otherwise you may get unexpected decoding errors.
+-- * /Do not/ use this function if 'isEndOfBytes' returns 'True', otherwise you
+-- may get unexpected decoding errors.
 decode
   :: (Monad m, Binary b)
   => Pp.StateT (Producer B.ByteString m r) m
@@ -159,3 +160,5 @@ isEndOfBytes = do
        | B.null a  -> isEndOfBytes
        | otherwise -> Pp.unDraw a >> return False
 {-# INLINABLE isEndOfBytes #-}
+{-# DEPRECATED isEndOfBytes
+    "Will be removed as soon as the `pipes-bytestring` library exports it" #-}
