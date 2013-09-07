@@ -91,7 +91,7 @@ decodeMany
   :: (Monad m, Binary b)
   => Producer B.ByteString m r  -- ^Producer from which to draw input.
   -> Producer' (ByteOffset, b) m
-               (Either (I.DecodingError, Producer B.ByteString m r) ())
+               (Either (I.DecodingError, Producer B.ByteString m r) r)
 decodeMany src = decodeGetMany Bin.get src
 {-# INLINABLE decodeMany #-}
 
@@ -101,21 +101,25 @@ decodeGetMany
   => Get b
   -> Producer B.ByteString m r  -- ^Producer from which to draw input.
   -> Producer' (ByteOffset, b) m
-               (Either (I.DecodingError, Producer B.ByteString m r) ())
+               (Either (I.DecodingError, Producer B.ByteString m r) r)
 decodeGetMany get src = do
     (me, src') <- P.runStateP src go
     return $ case me of
-      Just e  -> Left  (e, src')
-      Nothing -> Right ()
+      Left  e -> Left  (e, src')
+      Right r -> Right r
   where
     go = do
         eof <- lift isEndOfBytes
         if eof
-          then return Nothing
+          then do
+            ra <- lift Pp.draw
+            case ra of
+              Left  r -> return (Right r)
+              Right _ -> error "parseMany: The impossible happened!"
           else do
             eb <- lift (decodeGet get)
             case eb of
-              Left  e -> return (Just e)
+              Left  e -> return (Left e)
               Right b -> yield b >> go
 {-# INLINABLE decodeGetMany #-}
 
