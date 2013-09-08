@@ -1,4 +1,4 @@
-# Version HEAD
+# Version 0.2.0
 
 * API revamped in order to support `pipes-4.0.0` and `pipes-parse-2.0.0`.
 
