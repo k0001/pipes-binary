@@ -18,7 +18,9 @@ module Pipes.Binary
   , I.DecodingError(..)
     -- * Exports
     -- $exports
+  , module Data.Binary
   , module Data.Binary.Get
+  , module Data.Binary.Put
   ) where
 
 -------------------------------------------------------------------------------
