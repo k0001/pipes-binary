@@ -31,6 +31,7 @@ import           Pipes.Core
 import qualified Pipes.Binary.Internal         as I
 import qualified Pipes.Lift                    as P
 import qualified Pipes.Parse                   as Pp
+import           Pipes.ByteString              (isEndOfBytes)
 import qualified Data.Binary                   as Bin (get, put)
 import qualified Data.Binary.Put               as Put (runPut)
 --------------------------------------------------------------------------------
@@ -135,20 +136,3 @@ encodePut :: Monad m => Put -> Producer' B.ByteString m ()
 encodePut = \put -> do
     BLI.foldrChunks (\e a -> respond e >> a) (return ()) (Put.runPut put)
 {-# INLINABLE encodePut #-}
-
---------------------------------------------------------------------------------
--- XXX: this function is here until pipes-bytestring exports it
-
--- | Checks if the underlying 'Producer' has any bytes left.
--- Leading 'BS.empty' chunks are discarded.
-isEndOfBytes :: Monad m => Pp.StateT (Producer B.ByteString m r) m Bool
-isEndOfBytes = do
-    ma <- Pp.draw
-    case ma of
-      Left  _      -> return True
-      Right a
-       | B.null a  -> isEndOfBytes
-       | otherwise -> Pp.unDraw a >> return False
-{-# INLINABLE isEndOfBytes #-}
-{-# DEPRECATED isEndOfBytes
-    "Will be removed as soon as the `pipes-bytestring` library exports it" #-}
