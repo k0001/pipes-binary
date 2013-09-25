@@ -1,3 +1,10 @@
+# Version HEAD
+
+* Re-export `Put` and `Binary` from the `binary` package.
+
+* Use `isEndOfBytes` from the `pipes-bytestring` package.
+
+
 # Version 0.2.0
 
 * API revamped in order to support `pipes-4.0.0` and `pipes-parse-2.0.0`.
@@ -8,7 +15,7 @@
 * Decoding functions now report the number of bytes that were consumed in order
   to decode a value.
 
-* Re-export `Get`, `Put`, `Binary` and `ByteOffset` from the `binary` package.
+* Re-export `Get` and `ByteOffset` from the `binary` package.
 
 
 # Version 0.1.0.0
