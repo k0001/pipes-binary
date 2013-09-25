@@ -18,7 +18,6 @@ module Pipes.Binary
   , I.DecodingError(..)
     -- * Exports
     -- $exports
-  , isEndOfBytes
   , module Data.Binary.Get
   ) where
 
