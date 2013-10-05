@@ -32,7 +32,7 @@ import           Pipes.Core
 import qualified Pipes.Binary.Internal         as I
 import qualified Pipes.Lift                    as P
 import qualified Pipes.Parse                   as Pp
-import           Pipes.ByteString              (isEndOfBytes)
+import           Pipes.ByteString.Parse        (isEndOfBytes)
 import qualified Data.Binary                   as Bin (get, put)
 import qualified Data.Binary.Put               as Put (runPut)
 --------------------------------------------------------------------------------
