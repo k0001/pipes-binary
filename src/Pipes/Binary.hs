@@ -7,6 +7,7 @@
 module Pipes.Binary
   ( -- * @Binary@ instances
     encode
+  , encodeMany
   , decode
   , decodeMany
     -- * @Get@ monad
