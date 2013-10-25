@@ -129,11 +129,11 @@ decodeGetMany get src = do
 -- | Encodes the given 'Bin.Binary' instance and sends it downstream in
 -- 'BS.ByteString' chunks.
 --
--- Hint: You can easily turn this `Producer'` into a `Pipe` that encodes
--- `Binary` instances as they flow downstream using:
+-- Hint: You can easily turn this 'Producer'' into a 'Pipe' that encodes
+-- 'Binary' instances as they flow downstream using:
 --
 -- @
--- `for` `cat` `encode` :: (`Monad` m, `Binary` a) => `Pipe` a `B.ByteString` m r
+-- 'for' 'cat' 'encode' :: ('Monad' m, 'Binary' a) => 'Pipe' a 'B.ByteString' m r
 -- @
 encode :: (Monad m, Binary x) => x -> Producer' B.ByteString m ()
 encode = \x -> encodePut (Bin.put x)
