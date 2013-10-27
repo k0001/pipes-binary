@@ -7,6 +7,7 @@
 module Pipes.Binary
   ( -- * @Binary@ instances
     encode
+  , encodeMany
   , decode
   , decodeMany
     -- * @Get@ monad
@@ -138,6 +139,12 @@ decodeGetMany get src = do
 encode :: (Monad m, Binary x) => x -> Producer' B.ByteString m ()
 encode = \x -> encodePut (Bin.put x)
 {-# INLINABLE encode #-}
+
+-- | Continuously encodes the given 'Bin.Binary' instance and sends each result
+--   downstream in 'BS.ByteString' chunks. ('Pipe' version of 'encode'.)
+encodeMany :: (Monad m, Binary x) => Pipe x BS.ByteString m r
+encodeMany = for cat P.encode
+{-# INLINABLE encodeMany #-}
 
 -- | Like 'encode', except it takes an explicit 'Bin.Put' monad.
 encodePut :: Monad m => Put -> Producer' B.ByteString m ()
