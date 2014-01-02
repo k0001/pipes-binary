@@ -48,7 +48,7 @@ encode a = Pipes.ByteString.fromLazy (Data.Binary.encode a)
 {-# INLINABLE encode #-}
 
 -- | Parse a value from a byte stream
-decode :: (Monad m, Binary a) => Parser e ByteString m (Either DecodingError a)
+decode :: (Monad m, Binary a) => Parser ByteString m (Either DecodingError a)
 decode = PP.StateT (go id (Get.runGetIncremental Data.Binary.get))
   where
     go diffP decoder p = case decoder of
