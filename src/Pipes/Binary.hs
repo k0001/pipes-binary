@@ -31,17 +31,6 @@ import qualified Pipes.ByteString
 import Pipes.Parse (Parser, StateT)
 import qualified Pipes.Parse as PP
 
--- | A 'Get' decoding error, as provided by 'Fail'
-data DecodingError = DecodingError
-    { peConsumed :: {-# UNPACK #-} !ByteOffset
-      -- ^ Number of bytes consumed before the error
-    , peMessage  :: !String
-      -- ^ Error message
-    } deriving (Show, Read, Eq, Data, Typeable)
-
-instance Exception DecodingError
-instance Error     DecodingError
-
 -- | Convert a value to a byte stream
 encode :: (Monad m, Binary a) => a -> Producer ByteString m ()
 encode a = Pipes.ByteString.fromLazy (Data.Binary.encode a)
@@ -79,6 +68,17 @@ decoded k p0 = fmap from (k (to p0))
         (_, p') <- for p encode
         p'
 {-# INLINABLE decoded #-}
+
+-- | A 'Get' decoding error, as provided by 'Fail'
+data DecodingError = DecodingError
+    { peConsumed :: {-# UNPACK #-} !ByteOffset
+      -- ^ Number of bytes consumed before the error
+    , peMessage  :: !String
+      -- ^ Error message
+    } deriving (Show, Read, Eq, Data, Typeable)
+
+instance Exception DecodingError
+instance Error     DecodingError
 
 {- $exports
     The following types are re-exported from this module for your convenience:
