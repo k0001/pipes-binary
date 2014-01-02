@@ -47,7 +47,7 @@ decode = PP.StateT (go id (Get.runGetIncremental Data.Binary.get))
             case x of
                 Left   e       -> go diffP (k Nothing) (return e)
                 Right (bs, p') -> go (diffP . (yield bs >>)) (k (Just bs)) p'
-        Get.Done _ _   a   -> return (Right a, p)
+        Get.Done bs _  a   -> return (Right a, yield bs >> p)
 {-# INLINABLE decode #-}
 
 -- | An isomorphism between a stream of bytes and a stream of decoded values
