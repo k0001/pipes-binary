@@ -1,3 +1,9 @@
+{-| @pipes@ utilities for encoding and decoding values as byte streams
+
+    The tutorial at the bottom of this module illustrates how to use this
+    library.
+-}
+
 {-# LANGUAGE DeriveDataTypeable #-}
 
 module Pipes.Binary (
@@ -15,6 +21,9 @@ module Pipes.Binary (
     , module Data.Binary.Get
     , module Pipes.Parse
     , module Pipes.ByteString
+
+    -- * Tutorial
+    -- $tutorial
     ) where
 
 import Control.Exception (Exception)
@@ -91,3 +100,62 @@ instance Error     DecodingError
 
     [From "Pipes.ByteString"] 'ByteString'
 -}
+
+{- $tutorial
+
+    Use 'encode' to convert values to byte streams
+
+> -- example.hs
+>
+> import Pipes
+> import qualified Pipes.Prelude as P
+> import Pipes.Binary
+>
+> readInts :: Int -> Producer Int IO ()
+> readInts n = P.readLn >-> P.take n
+>
+> encodedValues :: Producer ByteString IO ()
+> encodedValues = do
+>     for (readInts 3) encode  -- Encode 3 Ints read from user input
+>     encode 'C'               -- Encode a 'Char'
+>     encode True              -- Encode a 'Bool'
+
+    Use 'decode' to parse a single decoded value or 'decoded' to access a stream
+    of decoded values:
+
+> -- example.hs
+>
+> import Data.ByteString (ByteString)
+> import Lens.Family.State.Strict (zoom)
+> import Pipes.Parse
+> import Prelude hiding (splitAt)
+>
+> decoder :: Parser ByteString IO ()
+> decoder = do
+>     xs <- zoom (decoded . splitAt 3) drawAll      -- Decode up to three 'Int's
+>     lift $ print (xs :: [Int])
+>     y  <- decode                                  -- Decode a single 'Char'
+>     lift $ print (y :: Either DecodingError Char)
+>     z  <- zoom decoded draw                       -- Same as 'decode', but
+>     lift $ print (z :: Maybe Bool)                -- with a 'Maybe'
+>
+> main = evalStateT decoder encodedValues
+
+    Here are some example inputs:
+
+> $ ./example
+> 1<Enter>
+> 2<Enter>
+> 3<Enter>
+> [1,2,3]
+> Right 'C'
+> Just True
+> $ ./example
+> <Ctrl-D>
+> []
+> Right 'C'
+> Just True
+
+-}
+
+
