@@ -72,10 +72,10 @@ decoded
 decoded k p0 = fmap from (k (to p0))
   where
     to p = do
-        (x, p') <- lift (PP.runStateT decodeL p)
+        (x, p') <- lift (PP.runStateT decode p)
         case x of
-            Left   e     -> return (e, p')
-            Right (_, a) -> do
+            Left  e -> return (e, p')
+            Right a -> do
                 yield a
                 to p'
     from p = do
