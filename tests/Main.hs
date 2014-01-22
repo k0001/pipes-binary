@@ -7,6 +7,17 @@ import           Test.Tasty.HUnit      ((@=?), testCase)
 import qualified Test.Tasty.Runners    as Tasty
 import           Test.Tasty.SmallCheck (forAll, testProperty)
 
+import Data.Int
+import Data.Word
+import qualified Data.Binary as Bin
+
+import qualified Data.ByteString as B
+import qualified Data.ByteString.Lazy as BL
+import Lens.Family.State.Strict (zoom)
+import Pipes ()
+import qualified Pipes.Prelude as P
+import qualified Pipes.Binary as PBin
+
 --------------------------------------------------------------------------------
 
 main :: IO ()
@@ -17,8 +28,9 @@ main =  Tasty.defaultMainWithIngredients
 
 
 tests :: Tasty.TestTree
-tests = Tasty.testGroup "pipes-binary"
+tests = Tasty.testGroup "root"
   [ testFunctorLaws
+  , testPipesBinary
   ]
 
 
@@ -36,3 +48,10 @@ testFunctorLaws = Tasty.testGroup "Functor laws (sample test)"
         fmap (odd . succ) x == (fmap odd . fmap succ) x
   ]
 
+
+testPipesBinary :: Tasty.TestTree
+testPipesBinary = Tasty.testGroup "pipes-binary"
+  [ testProperty "Pipes.Binary.encode and Data.Binary.encode give same results" $ do
+      forAll $ \(x :: (Char, (Double, (Int, (Maybe Int, Either Bool Int))))) ->
+         BL.toStrict (Bin.encode x) == B.concat (P.toList (PBin.encode x))
+  ]
