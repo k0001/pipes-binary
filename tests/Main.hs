@@ -7,14 +7,20 @@ import           Test.Tasty.HUnit                 (testCase, (@=?))
 import qualified Test.Tasty.Runners               as Tasty
 import           Test.Tasty.SmallCheck            (forAll, testProperty)
 
-import           Control.Monad.Trans.State.Strict (evalStateT, runStateT)
+
+import           Control.Monad
+import           Control.Monad.Trans.Maybe
+import           Control.Monad.Trans.State.Strict (StateT, evalStateT,
+                                                   runStateT)
 import qualified Data.Binary                      as Bin
 import qualified Data.ByteString                  as B
 import qualified Data.ByteString.Lazy             as BL
 import           Data.Functor.Identity            (runIdentity)
+import           Data.Maybe
 import           Lens.Family2.State.Strict        (zoom)
 import           Pipes
 import qualified Pipes.Binary                     as PBin
+import qualified Pipes.Parse                      as PP
 import qualified Pipes.Prelude                    as P
 
 --------------------------------------------------------------------------------
@@ -76,7 +82,28 @@ testPipesBinary = Tasty.testGroup "pipes-binary"
              o1 = runIdentity $ evalStateT PBin.decodeL (yield bs)
              o2 = runIdentity $ evalStateT PBin.decode  (yield bs)
          in fmap snd o1 == (o2 :: Either PBin.DecodingError FunnyType)
+
+  , testProperty "Pipes.Binary.decoded zoom" $ do
+      forAll $ \(xs :: [FunnyType]) ->
+         let dec0 :: Monad m => MaybeT (StateT (Producer B.ByteString m a) m) ()
+             dec0 = do
+               case xs of
+                 (x0:x1:x2:rest) -> do
+                   x0x1' <- lift $ zoom (PBin.decoded . PP.splitAt 2) PP.drawAll
+                   guard $ [x0,x1] == x0x1'
+                   ex2' <- lift $ PBin.decode
+                   guard $ Right x2 == ex2'
+                   mx3' <- lift $ zoom PBin.decoded PP.draw
+                   case (mx3', rest) of
+                     (Just x3',  (x3:_))
+                         | x3' == x3    -> undefined -- return ()
+                     (Nothing, [])      -> return ()
+                     _                  -> mzero
+                 [] -> do
+                   mx0' <- lift $ zoom PBin.decoded PP.draw
+                   guard $ isNothing (mx0' :: Maybe FunnyType)
+                   rest <- lift $ zoom PBin.decoded PP.drawAll
+                   guard $ null (rest :: [FunnyType])
+             p0 = for (each xs) PBin.encode
+         in isJust $ runIdentity $ evalStateT (runMaybeT dec0) p0
   ]
-
-
-
