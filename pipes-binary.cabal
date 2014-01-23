@@ -44,7 +44,7 @@ test-suite tests
           base             >= 4.5     && < 5
         , binary           >= 0.6     && < 0.8
         , bytestring       >= 0.9.2.1
-        , lens-family-core >= 1.0     && < 1.1
+        , lens-family      >= 1.0     && < 1.1
         , pipes            >= 4.1     && < 4.2
         , pipes-binary
         , smallcheck       >= 1.0     && < 1.1

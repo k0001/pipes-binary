@@ -12,7 +12,7 @@ import qualified Data.Binary                      as Bin
 import qualified Data.ByteString                  as B
 import qualified Data.ByteString.Lazy             as BL
 import           Data.Functor.Identity            (runIdentity)
-import           Lens.Family.State.Strict         (zoom)
+import           Lens.Family2.State.Strict        (zoom)
 import           Pipes
 import qualified Pipes.Binary                     as PBin
 import qualified Pipes.Prelude                    as P
