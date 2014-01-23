@@ -25,13 +25,13 @@ source-repository head
 
 library
     hs-source-dirs:    src
+    exposed-modules:   Pipes.Binary
+    ghc-options:       -Wall -Werror -O2
     build-depends:
           base             >= 4.5     && < 5
         , binary           >= 0.6     && < 0.8
-        , lens-family      >= 1.0.0   && < 1.1
-        , pipes            >= 4.1.0   && < 4.2
-        , pipes-parse      >= 3.0.0   && < 3.1
-        , pipes-bytestring >= 2.0.0   && < 2.1
-        , transformers     >= 0.2.0.0 && < 0.4
-    exposed-modules: Pipes.Binary
-    ghc-options: -Wall -O2
+        , lens-family      >= 1.0     && < 1.1
+        , pipes            >= 4.1     && < 4.2
+        , pipes-parse      >= 3.0     && < 3.1
+        , pipes-bytestring >= 2.0     && < 2.1
+        , transformers     >= 0.2     && < 0.4
