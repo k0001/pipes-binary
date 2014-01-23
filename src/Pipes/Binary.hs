@@ -209,9 +209,16 @@ instance Error     DecodingError
 > -- example.hs
 >
 > import Data.ByteString (ByteString)
-> import Lens.Family.State.Strict (zoom)
 > import Pipes.Parse
 > import Prelude hiding (splitAt)
+>
+> -- We need to import 'zoom', which can be found in many packages and all work
+> -- equally fine for our purposes. Read "Pipes.Parse.Tutorial" for details.
+> --
+> -- * From the package @lens-family-core@: 'Lens.Family.State.Strict.zoom'
+> -- * From the package @lens-family@:      'Lens.Family2.State.Strict.zoom'
+> -- * From the package @lens@:             'Control.Lens.Zoom.zoom'
+> import Lens.Family.State.Strict (zoom)
 >
 > decoder :: Parser ByteString IO ()
 > decoder = do
