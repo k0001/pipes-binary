@@ -157,9 +157,9 @@ decodeGetL m = PP.StateT (go id (Get.runGetIncremental m))
 
 -- | A 'Get' decoding error, as provided by 'Fail'
 data DecodingError = DecodingError
-  { peConsumed :: {-# UNPACK #-} !ByteOffset
+  { deConsumed :: {-# UNPACK #-} !ByteOffset
     -- ^ Number of bytes consumed before the error
-  , peMessage  :: !String
+  , deMessage  :: !String
     -- ^ Error message
   } deriving (Show, Read, Eq, Data, Typeable)
 
