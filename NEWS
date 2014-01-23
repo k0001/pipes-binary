@@ -1,3 +1,8 @@
+# Version 0.3.0
+
+* API revamped in order to support `pipes-parse-3.0.0`.
+
+
 # Version 0.2.1
 
 * Re-export `Put` and `Binary` from the `binary` package.
