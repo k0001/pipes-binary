@@ -17,7 +17,7 @@ import qualified Data.ByteString                  as B
 import qualified Data.ByteString.Lazy             as BL
 import           Data.Functor.Identity            (runIdentity)
 import           Data.Maybe
-import           Lens.Family2.State.Strict        (zoom)
+import           Lens.Family.State.Strict         (zoom)
 import           Pipes
 import qualified Pipes.Binary                     as PBin
 import qualified Pipes.Parse                      as PP

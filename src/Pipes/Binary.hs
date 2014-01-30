@@ -2,6 +2,13 @@
 --
 -- The tutorial at the bottom of this module illustrates how to use this
 -- library.
+--
+-- In this module, the following type synonym compatible with the @lens@,
+-- @lens-family@ and @lens-family-core@ libraries is used but not exported:
+--
+-- @
+-- type Lens' s a = forall f. 'Functor' f => (a -> f a) -> s -> f s
+-- @
 
 {-# LANGUAGE DeriveDataTypeable #-}
 {-# LANGUAGE RankNTypes         #-}
@@ -45,12 +52,15 @@ import qualified Data.Binary.Get           as Get
 import           Data.Binary.Put           (Put)
 import qualified Data.Binary.Put           as Put
 import           Data.Data                 (Data, Typeable)
-import           Lens.Family2              (Lens')
 import           Pipes
 import           Pipes.ByteString          (ByteString)
 import qualified Pipes.ByteString
 import           Pipes.Parse               (Parser, StateT)
 import qualified Pipes.Parse               as PP
+
+--------------------------------------------------------------------------------
+
+type Lens' s a = forall f. Functor f => (a -> f a) -> s -> f s
 
 --------------------------------------------------------------------------------
 
