@@ -93,18 +93,25 @@ decode = do
 -- | An isomorphism between a stream of bytes and a stream of decoded values
 decoded
   :: (Monad m, Binary a)
-  => Iso' (Producer ByteString m e)
-          (Producer a m (DecodingError, Producer ByteString m e))
-decoded = dimap to (fmap from)
+  => Iso' (Producer ByteString m r)
+          (Producer a m (Either (DecodingError, Producer ByteString m r)
+                                (Producer ByteString m r)))
+decoded = dimap _decode (fmap _encode)
   where
-    to p = do
-        (x, p') <- lift (PP.runStateT decode p)
+    _decode p = do
+        eof <- lift (PP.evalStateT PP.isEndOfInput p)
+        if eof
+           then return (Right p)
+           else do
+               (x, p') <- lift (PP.runStateT decode p)
+               case x of
+                   Left  e -> return (Left (e,p'))
+                   Right r -> yield r >> _decode p'
+    _encode p = do
+        x <- for p encode
         case x of
-            Left  e -> return (e, p')
-            Right a -> yield a >> to p'
-    from p = do
-        (_, p') <- for p encode
-        p'
+             Right p'     -> p'
+             Left (_, p') -> p'
 {-# INLINABLE decoded #-}
 
 --------------------------------------------------------------------------------
@@ -121,18 +128,26 @@ decodeL = decodeGetL get
 -- input consumed in order to decode it.
 decodedL
   :: (Monad m, Binary a)
-  => Iso' (Producer ByteString m e)
-          (Producer (ByteOffset, a) m (DecodingError, Producer ByteString m e))
-decodedL = dimap to (fmap from)
+  => Iso' (Producer ByteString m r)
+          (Producer (ByteOffset, a) m
+                    (Either (DecodingError, Producer ByteString m r)
+                            (Producer ByteString m r)))
+decodedL = dimap _decode (fmap _encode)
   where
-    to p = do
-        (x, p') <- lift (PP.runStateT decodeL p)
+    _decode p = do
+        finished <- lift $ PP.evalStateT PP.isEndOfInput p
+        if finished
+           then return (Right p)
+           else do
+               (x, p') <- lift (PP.runStateT decodeL p)
+               case x of
+                   Left  e -> return (Left (e,p'))
+                   Right r -> yield r >> _decode p'
+    _encode p = do
+        x <- for p (\(_, a) -> encode a)
         case x of
-            Left  e -> return (e, p')
-            Right r -> yield r >> to p'
-    from p = do
-        (_, p') <- for p (\(_, a) -> encode a)
-        p'
+             Right p'     -> p'
+             Left (_, p') -> p'
 {-# INLINABLE decodedL #-}
 
 --------------------------------------------------------------------------------
