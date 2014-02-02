@@ -87,9 +87,9 @@ encodePut = Pipes.ByteString.fromLazy . Put.runPut
 decode :: (Monad m, Binary a) => Parser ByteString m (Either DecodingError a)
 decode = do
     x <- decodeL
-    return $ case x of
+    return (case x of
         Left   e     -> Left  e
-        Right (_, a) -> Right a
+        Right (_, a) -> Right a)
 {-# INLINABLE decode #-}
 
 -- | An isomorphism between a stream of bytes and a stream of decoded values
@@ -157,9 +157,9 @@ decodedL = dimap _decode (fmap _encode)
 decodeGet :: (Monad m) => Get a -> Parser ByteString m (Either DecodingError a)
 decodeGet m = do
     x <- decodeGetL m
-    return $ case x of
+    return (case x of
         Left   e     -> Left  e
-        Right (_, a) -> Right a
+        Right (_, a) -> Right a)
 {-# INLINABLE decodeGet #-}
 
 -- | Like 'decodeL', except this requires an explicit 'Get' instead of any
