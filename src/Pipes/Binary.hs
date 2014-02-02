@@ -11,6 +11,7 @@
 -- @
 
 {-# LANGUAGE DeriveDataTypeable #-}
+{-# LANGUAGE DeriveGeneric      #-}
 {-# LANGUAGE RankNTypes         #-}
 
 module Pipes.Binary (
@@ -57,6 +58,7 @@ import           Data.ByteString                  (ByteString)
 import qualified Data.ByteString                  as B
 import           Data.Data                        (Data, Typeable)
 import           Data.Profunctor                  (Profunctor, dimap)
+import           GHC.Generics                     (Generic)
 import           Pipes
 import qualified Pipes.ByteString
 import           Pipes.Parse                      (Parser)
@@ -187,7 +189,7 @@ data DecodingError = DecodingError
     -- ^ Number of bytes consumed before the error
   , deMessage  :: !String
     -- ^ Error message
-  } deriving (Show, Read, Eq, Data, Typeable)
+  } deriving (Show, Read, Eq, Data, Typeable, Generic)
 
 instance Exception DecodingError
 instance Error     DecodingError
