@@ -7,7 +7,7 @@
 -- @lens-family@ and @lens-family-core@ libraries is used but not exported:
 --
 -- @
--- type Lens' s a = forall f. 'Functor' f => (a -> f a) -> s -> f s
+-- type Iso' a b = forall f p. ('Functor' f, 'Profunctor' p) => p b (f b) -> p a (f a)
 -- @
 
 {-# LANGUAGE DeriveDataTypeable #-}
@@ -52,6 +52,7 @@ import qualified Data.Binary.Get           as Get
 import           Data.Binary.Put           (Put)
 import qualified Data.Binary.Put           as Put
 import           Data.Data                 (Data, Typeable)
+import           Data.Profunctor           (Profunctor, dimap)
 import           Pipes
 import           Pipes.ByteString          (ByteString)
 import qualified Pipes.ByteString
@@ -60,7 +61,7 @@ import qualified Pipes.Parse               as PP
 
 --------------------------------------------------------------------------------
 
-type Lens' s a = forall f. Functor f => (a -> f a) -> s -> f s
+type Iso' a b = forall f p. (Functor f, Profunctor p) => p b (f b) -> p a (f a)
 
 --------------------------------------------------------------------------------
 
@@ -92,9 +93,9 @@ decode = do
 -- | An isomorphism between a stream of bytes and a stream of decoded values
 decoded
   :: (Monad m, Binary a)
-  => Lens' (Producer ByteString m e)
-           (Producer a m (DecodingError, Producer ByteString m e))
-decoded k p0 = fmap from (k (to p0))
+  => Iso' (Producer ByteString m e)
+          (Producer a m (DecodingError, Producer ByteString m e))
+decoded = dimap to (fmap from)
   where
     to p = do
         (x, p') <- lift (PP.runStateT decode p)
@@ -120,9 +121,9 @@ decodeL = decodeGetL get
 -- input consumed in order to decode it.
 decodedL
   :: (Monad m, Binary a)
-  => Lens' (Producer ByteString m e)
-           (Producer (ByteOffset, a) m (DecodingError, Producer ByteString m e))
-decodedL k p0 = fmap from (k (to p0))
+  => Iso' (Producer ByteString m e)
+          (Producer (ByteOffset, a) m (DecodingError, Producer ByteString m e))
+decodedL = dimap to (fmap from)
   where
     to p = do
         (x, p') <- lift (PP.runStateT decodeL p)
