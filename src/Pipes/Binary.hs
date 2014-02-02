@@ -76,23 +76,23 @@ encode :: (Monad m, Binary a) => a -> Producer ByteString m ()
 encode = encodePut . put
 {-# INLINABLE encode #-}
 
--- | Like 'encode', except this uses an explicit 'Put'
+-- | Like 'encode', except this uses an explicit 'Put'.
 encodePut :: (Monad m) => Put -> Producer ByteString m ()
 encodePut = Pipes.ByteString.fromLazy . Put.runPut
 {-# INLINABLE encodePut #-}
 
 --------------------------------------------------------------------------------
 
--- | Parse a value from a byte stream
+-- | Parse a value from a byte stream.
 decode :: (Monad m, Binary a) => Parser ByteString m (Either DecodingError a)
 decode = do
     x <- decodeL
     return (case x of
-        Left   e     -> Left  e
-        Right (_, a) -> Right a)
+       Left   e     -> Left  e
+       Right (_, a) -> Right a)
 {-# INLINABLE decode #-}
 
--- | An isomorphism between a stream of bytes and a stream of decoded values
+-- | An isomorphism between a stream of bytes and a stream of decoded values.
 decoded
   :: (Monad m, Binary a)
   => Iso' (Producer ByteString m r)
@@ -158,8 +158,8 @@ decodeGet :: (Monad m) => Get a -> Parser ByteString m (Either DecodingError a)
 decodeGet m = do
     x <- decodeGetL m
     return (case x of
-        Left   e     -> Left  e
-        Right (_, a) -> Right a)
+       Left   e     -> Left  e
+       Right (_, a) -> Right a)
 {-# INLINABLE decodeGet #-}
 
 -- | Like 'decodeL', except this requires an explicit 'Get' instead of any
@@ -169,19 +169,19 @@ decodeGetL
   => Get a -> Parser ByteString m (Either DecodingError (ByteOffset, a))
 decodeGetL m = S.StateT (go id (Get.runGetIncremental m))
   where
-    go diffP decoder p = case decoder of
-        Get.Fail _ off str -> return (Left (DecodingError off str), diffP p)
-        Get.Partial k      -> do
-            x <- next p
-            case x of
-                Left   e       -> go diffP (k Nothing) (return e)
-                Right (bs, p') -> go (diffP . (yield bs >>)) (k (Just bs)) p'
-        Get.Done bs off  a -> return (Right (off, a), yield bs >> p)
+    go diffP decoder p0 = case decoder of
+      Get.Fail _ off str -> return (Left (DecodingError off str), diffP p0)
+      Get.Done bs off  a -> return (Right (off, a), yield bs >> p0)
+      Get.Partial k      -> do
+         x <- next p0
+         case x of
+            Left   e       -> go diffP (k Nothing) (return e)
+            Right (bs, p1) -> go (diffP . (yield bs >>)) (k (Just bs)) p1
 {-# INLINABLE decodeGetL #-}
 
 --------------------------------------------------------------------------------
 
--- | A 'Get' decoding error, as provided by 'Fail'
+-- | A 'Get' decoding error, as provided by 'Get.Fail'.
 data DecodingError = DecodingError
   { deConsumed :: {-# UNPACK #-} !ByteOffset
     -- ^ Number of bytes consumed before the error
