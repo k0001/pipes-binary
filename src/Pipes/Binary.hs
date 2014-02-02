@@ -36,28 +36,30 @@ module Pipes.Binary (
   -- $exports
   , module Data.Binary
   , module Data.Binary.Get
+  , module Data.Binary.Put
+  , module Data.ByteString
   , module Pipes.Parse
-  , module Pipes.ByteString
 
   -- * Tutorial
   -- $tutorial
   ) where
 
-import           Control.Exception         (Exception)
-import           Control.Monad.Trans.Error (Error)
-import           Data.Binary               (Binary (..))
+import           Control.Exception                (Exception)
+import           Control.Monad.Trans.Error        (Error)
+import qualified Control.Monad.Trans.State.Strict as S
+import           Data.Binary                      (Binary (..))
 import qualified Data.Binary
-import           Data.Binary.Get           (ByteOffset, Get)
-import qualified Data.Binary.Get           as Get
-import           Data.Binary.Put           (Put)
-import qualified Data.Binary.Put           as Put
-import           Data.Data                 (Data, Typeable)
-import           Data.Profunctor           (Profunctor, dimap)
+import           Data.Binary.Get                  (ByteOffset, Get)
+import qualified Data.Binary.Get                  as Get
+import           Data.Binary.Put                  (Put)
+import qualified Data.Binary.Put                  as Put
+import           Data.ByteString                  (ByteString)
+import qualified Data.ByteString                  as B
+import           Data.Data                        (Data, Typeable)
+import           Data.Profunctor                  (Profunctor, dimap)
 import           Pipes
-import           Pipes.ByteString          (ByteString)
 import qualified Pipes.ByteString
-import           Pipes.Parse               (Parser, StateT)
-import qualified Pipes.Parse               as PP
+import           Pipes.Parse                      (Parser)
 
 --------------------------------------------------------------------------------
 
@@ -94,24 +96,23 @@ decode = do
 decoded
   :: (Monad m, Binary a)
   => Iso' (Producer ByteString m r)
-          (Producer a m (Either (DecodingError, Producer ByteString m r)
-                                (Producer ByteString m r)))
+          (Producer a m (Either (DecodingError, Producer ByteString m r) r))
 decoded = dimap _decode (fmap _encode)
   where
-    _decode p = do
-        eof <- lift (PP.evalStateT PP.isEndOfInput p)
-        if eof
-           then return (Right p)
-           else do
-               (x, p') <- lift (PP.runStateT decode p)
-               case x of
-                   Left  e -> return (Left (e,p'))
-                   Right r -> yield r >> _decode p'
-    _encode p = do
-        x <- for p encode
-        case x of
-             Right p'     -> p'
-             Left (_, p') -> p'
+    _decode p0 = do
+      (mr, p1) <- lift (S.runStateT isEndOfBytes' p0)
+      case mr of
+         Just r  -> return (Right r)
+         Nothing -> do
+            (ea, p2) <- lift (S.runStateT decode p1)
+            case ea of
+               Left  e -> return (Left (e, p2))
+               Right a -> yield a >> _decode p2
+    _encode p0 = do
+      er <- for p0 encode
+      case er of
+         Left (_, p1) -> p1
+         Right r      -> return r
 {-# INLINABLE decoded #-}
 
 --------------------------------------------------------------------------------
@@ -130,24 +131,23 @@ decodedL
   :: (Monad m, Binary a)
   => Iso' (Producer ByteString m r)
           (Producer (ByteOffset, a) m
-                    (Either (DecodingError, Producer ByteString m r)
-                            (Producer ByteString m r)))
+                    (Either (DecodingError, Producer ByteString m r) r))
 decodedL = dimap _decode (fmap _encode)
   where
-    _decode p = do
-        finished <- lift $ PP.evalStateT PP.isEndOfInput p
-        if finished
-           then return (Right p)
-           else do
-               (x, p') <- lift (PP.runStateT decodeL p)
-               case x of
-                   Left  e -> return (Left (e,p'))
-                   Right r -> yield r >> _decode p'
-    _encode p = do
-        x <- for p (\(_, a) -> encode a)
-        case x of
-             Right p'     -> p'
-             Left (_, p') -> p'
+    _decode p0 = do
+      (mr, p1) <- lift (S.runStateT isEndOfBytes' p0)
+      case mr of
+         Just r  -> return (Right r)
+         Nothing -> do
+            (ea, p2) <- lift (S.runStateT decodeL p1)
+            case ea of
+               Left  e -> return (Left (e, p2))
+               Right a -> yield a >> _decode p2
+    _encode p0 = do
+      er <- for p0 (\(_, a) -> encode a)
+      case er of
+         Left (_, p1) -> p1
+         Right r      -> return r
 {-# INLINABLE decodedL #-}
 
 --------------------------------------------------------------------------------
@@ -167,7 +167,7 @@ decodeGet m = do
 decodeGetL
   :: (Monad m)
   => Get a -> Parser ByteString m (Either DecodingError (ByteOffset, a))
-decodeGetL m = PP.StateT (go id (Get.runGetIncremental m))
+decodeGetL m = S.StateT (go id (Get.runGetIncremental m))
   where
     go diffP decoder p = case decoder of
         Get.Fail _ off str -> return (Left (DecodingError off str), diffP p)
@@ -191,6 +191,23 @@ data DecodingError = DecodingError
 
 instance Exception DecodingError
 instance Error     DecodingError
+
+--------------------------------------------------------------------------------
+-- Internal stuff
+
+-- | Like 'Pipes.ByteString.isEndOfBytes', except it returns @'Just' r@ if the
+-- there are no more bytes, otherwise 'Nothing'.
+isEndOfBytes':: Monad m => S.StateT (Producer ByteString m r) m (Maybe r)
+isEndOfBytes' = step =<< S.get
+  where
+    step p0 = do
+      x <- lift (next p0)
+      case x of
+         Left r       -> S.put (return r) >> return (Just r)
+         Right (a,p1)
+          | B.null a  -> step p1
+          | otherwise -> S.put (yield a >> p1) >> return Nothing
+{-# INLINABLE isEndOfBytes' #-}
 
 --------------------------------------------------------------------------------
 
