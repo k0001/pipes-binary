@@ -1,3 +1,8 @@
+# Version 0.3.0.1
+
+* Add dependency on `ghc-prim`, needed for GHC 7.4.2.
+
+
 # Version 0.3.0
 
 * API revamped in order to support `pipes-parse-3.0.0`.
