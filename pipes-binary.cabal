@@ -31,6 +31,7 @@ library
           base             >= 4.5     && < 5
         , binary           >= 0.6     && < 0.8
         , bytestring       >= 0.9.2.1
+        , ghc-prim
         , pipes            >= 4.0     && < 4.2
         , pipes-parse      >= 3.0     && < 3.1
         , pipes-bytestring >= 2.0     && < 2.1
