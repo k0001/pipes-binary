@@ -7,7 +7,7 @@
 -- @lens-family@ and @lens-family-core@ libraries is used but not exported:
 --
 -- @
--- type Lens' a b = forall f . Functor f => (b -> f b) -> (a -> f a)
+-- type Lens' a b = forall f . 'Functor' f => (b -> f b) -> (a -> f a)
 -- @
 
 {-# LANGUAGE DeriveDataTypeable #-}
@@ -93,7 +93,17 @@ decode = do
        Right (_, a) -> Right a)
 {-# INLINABLE decode #-}
 
--- | Improper lens that turns a stream of bytes into a stream of decoded values.
+-- | /Improper lens/ that turns a stream of bytes into a stream of decoded
+-- values.
+--
+-- By /improper lens/ we mean that in practice you can't expect the
+-- /Monad Morphism Laws/ to be true when using 'decoded' with
+-- 'Control.Lens.zoom'.
+--
+-- @
+-- 'Control.Lens.zoom' 'decoded' ('return' r) == 'return' r
+-- 'Control.Lens.zoom' 'decoded' (m >>= k)  == 'Control.Lens.zoom' m >>= 'Control.Lens.zoom' . f
+-- @
 decoded
   :: (Monad m, Binary a)
   => Lens' (Producer ByteString m r)
