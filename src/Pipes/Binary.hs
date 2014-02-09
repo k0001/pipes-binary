@@ -74,6 +74,13 @@ type Iso' a b = forall f p. (Functor f, Profunctor p) => p b (f b) -> p a (f a)
 -- Keep in mind that a single encode value might be split into many 'ByteString'
 -- chunks, that is, the lenght of the obtained 'Producer' might be greater than
 -- 1.
+--
+-- /Hint:/ You can easily turn this 'Producer'' into a 'Pipe' that encodes
+-- 'Binary' instances as they flow downstream using:
+--
+-- @
+-- 'for' 'cat' 'encode' :: ('Monad' m, 'Binary' a) => 'Pipe' a 'B.ByteString' m r
+-- @
 encode :: (Monad m, Binary a) => a -> Producer' ByteString m ()
 encode = encodePut . put
 {-# INLINABLE encode #-}
