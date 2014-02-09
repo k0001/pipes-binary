@@ -7,7 +7,7 @@
 -- @lens-family@ and @lens-family-core@ libraries is used but not exported:
 --
 -- @
--- type Iso' a b = forall f p. ('Functor' f, 'Profunctor' p) => p b (f b) -> p a (f a)
+-- type Lens' a b = forall f . 'Functor' f => (b -> f b) -> (a -> f a)
 -- @
 
 {-# LANGUAGE DeriveDataTypeable #-}
@@ -57,7 +57,6 @@ import qualified Data.Binary.Put                  as Put
 import           Data.ByteString                  (ByteString)
 import qualified Data.ByteString                  as B
 import           Data.Data                        (Data, Typeable)
-import           Data.Profunctor                  (Profunctor, dimap)
 import           GHC.Generics                     (Generic)
 import           Pipes
 import qualified Pipes.ByteString
@@ -65,7 +64,7 @@ import           Pipes.Parse                      (Parser)
 
 --------------------------------------------------------------------------------
 
-type Iso' a b = forall f p. (Functor f, Profunctor p) => p b (f b) -> p a (f a)
+type Lens' a b = forall f . Functor f => (b -> f b) -> (a -> f a)
 
 --------------------------------------------------------------------------------
 
@@ -107,12 +106,22 @@ decode = do
        Right (_, a) -> Right a)
 {-# INLINABLE decode #-}
 
--- | An isomorphism between a stream of bytes and a stream of decoded values.
+-- | /Improper lens/ that turns a stream of bytes into a stream of decoded
+-- values.
+--
+-- By /improper lens/ we mean that in practice you can't expect the
+-- /Monad Morphism Laws/ to be true when using 'decoded' with
+-- 'Control.Lens.zoom'.
+--
+-- @
+-- 'Control.Lens.zoom' 'decoded' ('return' r) /= 'return' r
+-- 'Control.Lens.zoom' 'decoded' (m >>= k)  /= 'Control.Lens.zoom' m >>= 'Control.Lens.zoom' . f
+-- @
 decoded
   :: (Monad m, Binary a)
-  => Iso' (Producer ByteString m r)
-          (Producer a m (Either (DecodingError, Producer ByteString m r) r))
-decoded = dimap _decode (fmap _encode)
+  => Lens' (Producer ByteString m r)
+           (Producer a m (Either (DecodingError, Producer ByteString m r) r))
+decoded k p = fmap _encode (k (_decode p))
   where
     _decode p0 = do
       (mr, p1) <- lift (S.runStateT isEndOfBytes' p0)
@@ -144,10 +153,10 @@ decodeL = decodeGetL get
 -- input consumed in order to decode it.
 decodedL
   :: (Monad m, Binary a)
-  => Iso' (Producer ByteString m r)
-          (Producer (ByteOffset, a) m
-                    (Either (DecodingError, Producer ByteString m r) r))
-decodedL = dimap _decode (fmap _encode)
+  => Lens' (Producer ByteString m r)
+           (Producer (ByteOffset, a) m
+                     (Either (DecodingError, Producer ByteString m r) r))
+decodedL k p = fmap _encode (k (_decode p))
   where
     _decode p0 = do
       (mr, p1) <- lift (S.runStateT isEndOfBytes' p0)

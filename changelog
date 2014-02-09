@@ -2,6 +2,8 @@
 
 * Generalized `encode` and `encodePut` to `Producer'`s.
 
+* `decoded` and `decodedL` are now `Lens'`, not `Iso'` anymore.
+
 
 # Version 0.3.0.1
 
