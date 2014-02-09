@@ -77,11 +77,17 @@ type Iso' a b = forall f p. (Functor f, Profunctor p) => p b (f b) -> p a (f a)
 encode :: (Monad m, Binary a) => a -> Producer' ByteString m ()
 encode = encodePut . put
 {-# INLINABLE encode #-}
+{-# RULES "p >-> for cat encode" forall p .
+    p >-> for cat encode = for p (\a -> encodePut (put a))
+  #-}
 
 -- | Like 'encode', except this uses an explicit 'Put'.
 encodePut :: (Monad m) => Put -> Producer' ByteString m ()
 encodePut = Pipes.ByteString.fromLazy . Put.runPut
 {-# INLINABLE encodePut #-}
+{-# RULES "p >-> for cat encodePut" forall p.
+    p >-> for cat encodePut = for p encodePut
+  #-}
 
 --------------------------------------------------------------------------------
 
