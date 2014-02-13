@@ -55,7 +55,6 @@ import qualified Data.Binary.Get                  as Get
 import           Data.Binary.Put                  (Put)
 import qualified Data.Binary.Put                  as Put
 import           Data.ByteString                  (ByteString)
-import qualified Data.ByteString                  as B
 import           Data.Data                        (Data, Typeable)
 import           GHC.Generics                     (Generic)
 import           Pipes
@@ -124,11 +123,11 @@ decoded
 decoded k p = fmap _encode (k (_decode p))
   where
     _decode p0 = do
-      (mr, p1) <- lift (S.runStateT atEndOfBytes p0)
-      case mr of
-         Just r  -> return (Right r)
-         Nothing -> do
-            (ea, p2) <- lift (S.runStateT decode p1)
+      x <- lift (next p0)
+      case x of
+         Left r         -> return (Right r)
+         Right (bs, p1) -> do
+            (ea, p2) <- lift $ S.runStateT decode (yield bs >> p1)
             case ea of
                Left  e -> return (Left (e, p2))
                Right a -> yield a >> _decode p2
@@ -159,11 +158,11 @@ decodedL
 decodedL k p = fmap _encode (k (_decode p))
   where
     _decode p0 = do
-      (mr, p1) <- lift (S.runStateT atEndOfBytes p0)
-      case mr of
-         Just r  -> return (Right r)
-         Nothing -> do
-            (ea, p2) <- lift (S.runStateT decodeL p1)
+      x <- lift (next p0)
+      case x of
+         Left r         -> return (Right r)
+         Right (bs, p1) -> do
+            (ea, p2) <- lift $ S.runStateT decodeL (yield bs >> p1)
             case ea of
                Left  e -> return (Left (e, p2))
                Right a -> yield a >> _decode p2
@@ -216,22 +215,6 @@ data DecodingError = DecodingError
 instance Exception DecodingError
 instance Error     DecodingError
 
---------------------------------------------------------------------------------
--- Internal stuff
-
--- | Like 'Pipes.ByteString.isEndOfBytes', except it returns @'Just' r@ if the
--- there are no more bytes, otherwise 'Nothing'.
-atEndOfBytes:: Monad m => S.StateT (Producer ByteString m r) m (Maybe r)
-atEndOfBytes = step =<< S.get
-  where
-    step p0 = do
-      x <- lift (next p0)
-      case x of
-         Left r       -> S.put (return r) >> return (Just r)
-         Right (a,p1)
-          | B.null a  -> step p1
-          | otherwise -> S.put (yield a >> p1) >> return Nothing
-{-# INLINABLE atEndOfBytes #-}
 
 --------------------------------------------------------------------------------
 
