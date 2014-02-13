@@ -124,7 +124,7 @@ decoded
 decoded k p = fmap _encode (k (_decode p))
   where
     _decode p0 = do
-      (mr, p1) <- lift (S.runStateT isEndOfBytes' p0)
+      (mr, p1) <- lift (S.runStateT atEndOfBytes p0)
       case mr of
          Just r  -> return (Right r)
          Nothing -> do
@@ -159,7 +159,7 @@ decodedL
 decodedL k p = fmap _encode (k (_decode p))
   where
     _decode p0 = do
-      (mr, p1) <- lift (S.runStateT isEndOfBytes' p0)
+      (mr, p1) <- lift (S.runStateT atEndOfBytes p0)
       case mr of
          Just r  -> return (Right r)
          Nothing -> do
@@ -221,8 +221,8 @@ instance Error     DecodingError
 
 -- | Like 'Pipes.ByteString.isEndOfBytes', except it returns @'Just' r@ if the
 -- there are no more bytes, otherwise 'Nothing'.
-isEndOfBytes':: Monad m => S.StateT (Producer ByteString m r) m (Maybe r)
-isEndOfBytes' = step =<< S.get
+atEndOfBytes:: Monad m => S.StateT (Producer ByteString m r) m (Maybe r)
+atEndOfBytes = step =<< S.get
   where
     step p0 = do
       x <- lift (next p0)
@@ -231,7 +231,7 @@ isEndOfBytes' = step =<< S.get
          Right (a,p1)
           | B.null a  -> step p1
           | otherwise -> S.put (yield a >> p1) >> return Nothing
-{-# INLINABLE isEndOfBytes' #-}
+{-# INLINABLE atEndOfBytes #-}
 
 --------------------------------------------------------------------------------
 
