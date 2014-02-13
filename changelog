@@ -1,4 +1,4 @@
-# Version HEAD
+# Version 0.4.0
 
 * Generalized `encode` and `encodePut` to `Producer'`s.
 
