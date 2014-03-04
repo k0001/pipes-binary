@@ -10,4 +10,5 @@ license**. Read the file named ``LICENSE`` found in this same directory
 for details.
 
 See the ``PEOPLE`` file to learn about the people involved in this
-effort.
+effort. Consider mentioning your name in this file if you are
+contributing to the project.
