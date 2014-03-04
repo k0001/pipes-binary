@@ -1,4 +1,4 @@
-# Version HEAD
+# Version 0.4.0.1
 
 * Upper bound dependency bumps (tests).
 
