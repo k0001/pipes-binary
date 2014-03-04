@@ -1,3 +1,8 @@
+# Version HEAD
+
+* Upper bound dependency bumps (tests).
+
+
 # Version 0.4.0
 
 * Generalized `encode` and `encodePut` to `Producer'`s.

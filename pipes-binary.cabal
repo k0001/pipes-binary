@@ -12,11 +12,11 @@ category:           Pipes
 build-type:         Simple
 synopsis:           Encode and decode binary streams using the pipes and binary libraries.
 cabal-version:      >=1.8
-extra-source-files: README.md PEOPLE changelog
+extra-source-files: README.md PEOPLE changelog.md
 description:
   Encode and decode binary Pipes streams using the @binary@ library.
   .
-  See the @changelog@ file in the source distribution to learn about any
+  See the @changelog.md@ file in the source distribution to learn about any
   important changes between version.
 
 source-repository head
