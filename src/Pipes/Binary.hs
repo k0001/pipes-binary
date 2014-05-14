@@ -174,7 +174,6 @@ decodedL k p = fmap _encode (k (_decode p))
          Right r      -> return r
 {-# INLINABLE decodedL #-}
 
-
 --------------------------------------------------------------------------------
 
 -- | Like 'decode', except this requires an explicit 'Get' instead of any
