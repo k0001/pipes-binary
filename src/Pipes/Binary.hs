@@ -29,6 +29,7 @@ module Pipes.Binary (
   -- ** Explicit 'Get'
   , decodeGet
   , decodeGetL
+  , getMany
 
   -- * Types
   , DecodingError(..)
@@ -173,6 +174,7 @@ decodedL k p = fmap _encode (k (_decode p))
          Right r      -> return r
 {-# INLINABLE decodedL #-}
 
+
 --------------------------------------------------------------------------------
 
 -- | Like 'decode', except this requires an explicit 'Get' instead of any
@@ -201,6 +203,19 @@ decodeGetL m = S.StateT (go id (Get.runGetIncremental m))
             Left   e       -> go diffP (k Nothing) (return e)
             Right (bs, p1) -> go (diffP . (yield bs >>)) (k (Just bs)) p1
 {-# INLINABLE decodeGetL #-}
+
+-- |Produce values from a ByteString, given an explicit Get monad
+getMany
+  :: (Monad m) => Get a -> Producer ByteString m r -> Producer a m DecodingError
+getMany getA = go
+  where go p = do
+          (x,p') <- lift $ S.runStateT (decodeGet getA) p
+          case x of
+            Left err -> return err
+            Right a -> do
+              yield a
+              go p'
+{-# INLINABLE getMany #-}
 
 --------------------------------------------------------------------------------
 
