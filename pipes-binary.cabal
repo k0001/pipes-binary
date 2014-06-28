@@ -35,7 +35,7 @@ library
         , pipes            >= 4.0     && < 4.2
         , pipes-parse      >= 3.0     && < 3.1
         , pipes-bytestring >= 2.0     && < 2.2
-        , transformers     >= 0.2     && < 0.4
+        , transformers     >= 0.2     && < 0.5
 
 test-suite tests
     type:              exitcode-stdio-1.0
