@@ -1,3 +1,8 @@
+# Version 0.4.0.2
+
+* Upper bound dependency bumps (pipes-bytestring).
+
+
 # Version 0.4.0.1
 
 * Upper bound dependency bumps (tests).
