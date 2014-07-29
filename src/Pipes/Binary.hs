@@ -114,7 +114,7 @@ decode = do
 --
 -- @
 -- 'Control.Lens.zoom' 'decoded' ('return' r) /= 'return' r
--- 'Control.Lens.zoom' 'decoded' (m >>= k)  /= 'Control.Lens.zoom' m >>= 'Control.Lens.zoom' . f
+-- 'Control.Lens.zoom' 'decoded' (m >>= f)  /= 'Control.Lens.zoom' 'decoded' m >>= 'Control.Lens.zoom' 'decoded' . f
 -- @
 decoded
   :: (Monad m, Binary a)
