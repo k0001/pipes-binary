@@ -54,4 +54,4 @@ test-suite tests
         , tasty            >= 0.7     && < 0.9
         , tasty-hunit      >= 0.4     && < 0.9
         , tasty-smallcheck >= 0.2     && < 0.9
-        , transformers     >= 0.2     && < 0.4
+        , transformers     >= 0.2     && < 0.5
