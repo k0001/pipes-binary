@@ -1,3 +1,8 @@
+# Version 0.4.0.4
+
+* Upper bound dependency bumps (lens-family-core).
+
+
 # Version 0.4.0.3
 
 * Upper bound dependency bumps (pipes-bytestring).
