@@ -1,5 +1,5 @@
 name:               pipes-binary
-version:            0.4.0.4
+version:            0.4.0.5
 license:            BSD3
 license-file:       LICENSE
 copyright:          Copyright (c) Renzo Carbonara 2013-2014
@@ -51,7 +51,7 @@ test-suite tests
         , pipes-binary
         , pipes-parse      >= 3.0     && < 3.1
         , smallcheck       >= 1.0     && < 1.2
-        , tasty            >= 0.8     && < 0.11
+        , tasty            >= 0.8     && < 0.12
         , tasty-hunit      >= 0.8     && < 0.10
         , tasty-smallcheck >= 0.2     && < 0.9
         , transformers     >= 0.2     && < 0.5

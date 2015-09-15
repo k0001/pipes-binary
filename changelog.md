@@ -1,3 +1,8 @@
+# Version 0.4.0.5
+
+* Upper bound dependency bumps (tasty).
+
+
 # Version 0.4.0.4
 
 * Upper bound dependency bumps (lens-family-core).
