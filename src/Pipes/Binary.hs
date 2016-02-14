@@ -55,6 +55,7 @@ import qualified Data.Binary.Get                  as Get
 import           Data.Binary.Put                  (Put)
 import qualified Data.Binary.Put                  as Put
 import           Data.ByteString                  (ByteString)
+import qualified Data.ByteString                  as ByteString
 import           Data.Data                        (Data, Typeable)
 import           GHC.Generics                     (Generic)
 import           Pipes
@@ -126,11 +127,14 @@ decoded k p = fmap _encode (k (_decode p))
       x <- lift (next p0)
       case x of
          Left r         -> return (Right r)
-         Right (bs, p1) -> do
-            (ea, p2) <- lift $ S.runStateT decode (yield bs >> p1)
-            case ea of
-               Left  e -> return (Left (e, p2))
-               Right a -> yield a >> _decode p2
+         Right (bs, p1) ->
+             if ByteString.null bs
+                 then _decode p1
+                 else do
+                     (ea, p2) <- lift $ S.runStateT decode (yield bs >> p1)
+                     case ea of
+                        Left  e -> return (Left (e, p2))
+                        Right a -> yield a >> _decode p2
     _encode p0 = do
       er <- for p0 encode
       case er of
