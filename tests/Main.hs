@@ -8,6 +8,7 @@ import qualified Test.Tasty.Runners               as Tasty
 import           Test.Tasty.SmallCheck            (forAll, testProperty)
 
 
+import           Control.Exception                (throwIO)
 import           Control.Monad
 import           Control.Monad.Trans.Maybe
 import           Control.Monad.Trans.State.Strict (StateT, evalStateT,
@@ -17,6 +18,7 @@ import qualified Data.ByteString                  as B
 import qualified Data.ByteString.Lazy             as BL
 import           Data.Functor.Identity            (runIdentity)
 import           Data.Maybe
+import           Lens.Family                      (view)
 import           Lens.Family.State.Strict         (zoom)
 import           Pipes
 import qualified Pipes.Binary                     as PBin
@@ -115,4 +117,14 @@ testPipesBinary = Tasty.testGroup "pipes-binary"
                    guard $ xrest == xrest'
              p0 = for (each xs) PBin.encode
          in isJust $ runIdentity $ evalStateT (runMaybeT dec0) p0
+  , testCase "Decoding an empty stream shouldn't fail" (do
+      let p   :: Monad m
+              => Producer Int m
+                  (Either (PBin.DecodingError, Producer B.ByteString m ()) ())
+          p = view PBin.decoded (yield B.empty)
+
+      x <- runEffect (p >-> P.print)
+      case x of
+          Left (err, _) -> throwIO err
+          Right      r  -> return  r )
   ]
