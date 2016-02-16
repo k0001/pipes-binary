@@ -1,3 +1,10 @@
+# Version 0.4.1
+
+* Fix #24 - skip leading empty chunks when decoding.
+
+* Upper bound dependency bumps (transformers, binary).
+
+
 # Version 0.4.0.5
 
 * Upper bound dependency bumps (tasty).
