@@ -55,6 +55,7 @@ import qualified Data.Binary.Get                  as Get
 import           Data.Binary.Put                  (Put)
 import qualified Data.Binary.Put                  as Put
 import           Data.ByteString                  (ByteString)
+import qualified Data.ByteString                  as BS
 import           Data.Data                        (Data, Typeable)
 import           GHC.Generics                     (Generic)
 import           Pipes
@@ -123,7 +124,7 @@ decoded
 decoded k p = fmap _encode (k (_decode p))
   where
     _decode p0 = do
-      x <- lift (next p0)
+      x <- lift (nextSkipEmpty p0)
       case x of
          Left r         -> return (Right r)
          Right (bs, p1) -> do
@@ -158,7 +159,7 @@ decodedL
 decodedL k p = fmap _encode (k (_decode p))
   where
     _decode p0 = do
-      x <- lift (next p0)
+      x <- lift (nextSkipEmpty p0)
       case x of
          Left r         -> return (Right r)
          Right (bs, p1) -> do
@@ -196,7 +197,7 @@ decodeGetL m = S.StateT (go id (Get.runGetIncremental m))
       Get.Fail _ off str -> return (Left (DecodingError off str), diffP p0)
       Get.Done bs off  a -> return (Right (off, a), yield bs >> p0)
       Get.Partial k      -> do
-         x <- next p0
+         x <- nextSkipEmpty p0
          case x of
             Left   e       -> go diffP (k Nothing) (return e)
             Right (bs, p1) -> go (diffP . (yield bs >>)) (k (Just bs)) p1
@@ -215,6 +216,23 @@ data DecodingError = DecodingError
 instance Exception DecodingError
 instance Error     DecodingError
 
+--------------------------------------------------------------------------------
+-- Internal stuff
+
+-- | Like 'Pipes.next', except it skips leading 'BS.null' chunks.
+nextSkipEmpty
+  :: Monad m
+  => Producer ByteString m r
+  -> m (Either r (ByteString, Producer ByteString m r))
+nextSkipEmpty = go where
+    go p0 = do
+      x <- next p0
+      case x of
+         Left  _        -> return x
+         Right (a,p1)
+          | BS.null a   -> go p1
+          | otherwise   -> return x
+{-# INLINABLE nextSkipEmpty #-}
 
 --------------------------------------------------------------------------------
 
