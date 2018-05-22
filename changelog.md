@@ -1,3 +1,8 @@
+# Version 0.4.2
+
+* Remove upper bound on dependencies other than base.
+
+
 # Version 0.4.1
 
 * Fix #24 - skip leading empty chunks when decoding.
