@@ -2,6 +2,8 @@
 
 * Builds with GHC 9.0.1.
 
+* Use QuickCheck instead of SmallCheck for tests.
+
 
 # Version 0.4.2
 
