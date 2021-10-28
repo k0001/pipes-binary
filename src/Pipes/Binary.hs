@@ -70,6 +70,10 @@ type Lens' a b = forall f . Functor f => (b -> f b) -> (a -> f a)
 
 -- | Convert a value to a byte stream.
 --
+-- @
+-- 'encode' :: ('Monad' m, 'Binary' a) => a -> 'Producer'' 'ByteString' m ()
+-- @
+--
 -- Keep in mind that a single encode value might be split into many 'ByteString'
 -- chunks, that is, the lenght of the obtained 'Producer' might be greater than
 -- 1.
@@ -78,9 +82,9 @@ type Lens' a b = forall f . Functor f => (b -> f b) -> (a -> f a)
 -- 'Binary' instances as they flow downstream using:
 --
 -- @
--- 'for' 'cat' 'encode' :: ('Monad' m, 'Binary' a) => 'Pipe' a 'B.ByteString' m r
+-- 'for' 'cat' 'encode' :: ('Monad' m, 'Binary' a) => 'Pipe' a 'ByteString' m r
 -- @
-encode :: (Monad m, Binary a) => a -> Producer' ByteString m ()
+encode :: (Monad m, Binary a) => a -> Proxy x' x () ByteString m ()
 encode = encodePut . put
 {-# INLINABLE encode #-}
 {-# RULES "p >-> for cat encode" forall p .
@@ -88,8 +92,12 @@ encode = encodePut . put
   #-}
 
 -- | Like 'encode', except this uses an explicit 'Put'.
-encodePut :: (Monad m) => Put -> Producer' ByteString m ()
-encodePut = Pipes.ByteString.fromLazy . Put.runPut
+--
+-- @
+-- 'encodePut' :: ('Monad' m) => 'Put' -> 'Producer'' 'ByteString' m ()
+-- @
+encodePut :: (Monad m) => Put -> Proxy x' x () ByteString m ()
+encodePut = \p -> Pipes.ByteString.fromLazy (Put.runPut p)
 {-# INLINABLE encodePut #-}
 {-# RULES "p >-> for cat encodePut" forall p.
     p >-> for cat encodePut = for p encodePut

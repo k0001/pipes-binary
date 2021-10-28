@@ -1,3 +1,8 @@
+# Version 0.4.3
+
+* Builds with GHC 9.0.1.
+
+
 # Version 0.4.2
 
 * Remove upper bound on dependencies other than base.

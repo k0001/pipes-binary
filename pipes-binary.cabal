@@ -1,8 +1,8 @@
 name:               pipes-binary
-version:            0.4.2
+version:            0.4.3
 license:            BSD3
 license-file:       LICENSE
-copyright:          Copyright (c) Renzo Carbonara 2013-2018
+copyright:          Copyright (c) Renzo Carbonara 2013-2021
 author:             Renzo Carbonara
 maintainer:         renλren.zone
 stability:          Experimental
