@@ -2,6 +2,9 @@
 
 * Builds with GHC 9.0.1.
 
+* `Producer'` replaced with `Proxy`. See `pipes` 
+  issue #224.
+
 * Use QuickCheck instead of SmallCheck for tests.
 
 
