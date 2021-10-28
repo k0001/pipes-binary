@@ -1,1 +1,1 @@
-(import ./default.nix {}).pipes-binary.env
+(import ./default.nix {})._shell
