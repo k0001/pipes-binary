@@ -10,6 +10,7 @@
 -- type Lens' a b = forall f . 'Functor' f => (b -> f b) -> (a -> f a)
 -- @
 
+{-# LANGUAGE CPP #-}
 {-# LANGUAGE DeriveDataTypeable #-}
 {-# LANGUAGE DeriveGeneric      #-}
 {-# LANGUAGE RankNTypes         #-}
@@ -46,7 +47,9 @@ module Pipes.Binary (
   ) where
 
 import           Control.Exception                (Exception)
+#if !MIN_VERSION_transformers(0,6,0)
 import           Control.Monad.Trans.Error        (Error)
+#endif
 import qualified Control.Monad.Trans.State.Strict as S
 import           Data.Binary                      (Binary (..))
 import qualified Data.Binary
@@ -222,7 +225,9 @@ data DecodingError = DecodingError
   } deriving (Show, Read, Eq, Data, Typeable, Generic)
 
 instance Exception DecodingError
+#if !MIN_VERSION_transformers(0,6,0)
 instance Error     DecodingError
+#endif
 
 --------------------------------------------------------------------------------
 -- Internal stuff
