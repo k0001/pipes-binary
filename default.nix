@@ -1,10 +1,20 @@
-{ nixpkgs ? import ./nixpkgs.nix
+{ mkDerivation, base, binary, bytestring, ghc-prim
+, lens-family-core, lib, pipes, pipes-bytestring, pipes-parse
+, tasty, tasty-hunit, tasty-quickcheck, transformers
 }:
-
-let
-pkgs = import nixpkgs {};
-ghc901 = pkgs.haskell.packages.ghc901.override {
-  packageSetConfig = import ./hs-overlay.nix { inherit pkgs; };
-};
-
-in { inherit (ghc901) pipes-binary _shell; }
+mkDerivation {
+  pname = "pipes-binary";
+  version = "0.4.4";
+  src = ./.;
+  libraryHaskellDepends = [
+    base binary bytestring ghc-prim pipes pipes-bytestring pipes-parse
+    transformers
+  ];
+  testHaskellDepends = [
+    base binary bytestring ghc-prim lens-family-core pipes pipes-parse
+    tasty tasty-hunit tasty-quickcheck transformers
+  ];
+  homepage = "https://github.com/k0001/pipes-binary";
+  description = "Encode and decode binary streams using the pipes and binary libraries";
+  license = lib.licenses.bsd3;
+}

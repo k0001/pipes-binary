@@ -9,3 +9,4 @@ dist
 TAGS
 .cabal-sandbox/
 cabal.sandbox.config
+dist-newstyle/

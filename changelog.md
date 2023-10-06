@@ -1,8 +1,13 @@
+# Version 0.4.4
+
+* Support `transformers >= 0.7.0`.
+
+
 # Version 0.4.3
 
 * Builds with GHC 9.0.1.
 
-* `Producer'` replaced with `Proxy`. See `pipes` 
+* `Producer'` replaced with `Proxy`. See `pipes`
   issue #224.
 
 * Use QuickCheck instead of SmallCheck for tests.
