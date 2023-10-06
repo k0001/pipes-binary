@@ -89,10 +89,7 @@ type Lens' a b = forall f . Functor f => (b -> f b) -> (a -> f a)
 -- @
 encode :: (Monad m, Binary a) => a -> Proxy x' x () ByteString m ()
 encode = encodePut . put
-{-# INLINABLE encode #-}
-{-# RULES "p >-> for cat encode" forall p .
-    p >-> for cat encode = for p (\a -> encodePut (put a))
-  #-}
+{-# INLINE encode #-}
 
 -- | Like 'encode', except this uses an explicit 'Put'.
 --
@@ -101,10 +98,7 @@ encode = encodePut . put
 -- @
 encodePut :: (Monad m) => Put -> Proxy x' x () ByteString m ()
 encodePut = \p -> Pipes.ByteString.fromLazy (Put.runPut p)
-{-# INLINABLE encodePut #-}
-{-# RULES "p >-> for cat encodePut" forall p.
-    p >-> for cat encodePut = for p encodePut
-  #-}
+{-# INLINE encodePut #-}
 
 --------------------------------------------------------------------------------
 
@@ -115,7 +109,7 @@ decode = do
     return (case x of
        Left   e     -> Left  e
        Right (_, a) -> Right a)
-{-# INLINABLE decode #-}
+{-# INLINE decode #-}
 
 -- | /Improper lens/ that turns a stream of bytes into a stream of decoded
 -- values.
@@ -158,7 +152,7 @@ decodeL
   :: (Monad m, Binary a)
   => Parser ByteString m (Either DecodingError (ByteOffset, a))
 decodeL = decodeGetL get
-{-# INLINABLE decodeL #-}
+{-# INLINE decodeL #-}
 
 -- | Like 'decoded', except this tags each decoded value with the length of
 -- input consumed in order to decode it.
@@ -195,7 +189,7 @@ decodeGet m = do
     return (case x of
        Left   e     -> Left  e
        Right (_, a) -> Right a)
-{-# INLINABLE decodeGet #-}
+{-# INLINE decodeGet #-}
 
 -- | Like 'decodeL', except this requires an explicit 'Get' instead of any
 -- 'Binary' instance.
